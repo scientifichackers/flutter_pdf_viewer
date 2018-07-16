@@ -15,8 +15,8 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 
 Put `test.pdf` at `assets/test.pdf`
 
-pubspec.yaml
 ```yaml
+// pubspec.yaml
 
 flutter:
     ...
@@ -25,8 +25,9 @@ flutter:
         - assets/test.pdf
 ```
 
-
 ```dart
+// main.dart
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -88,7 +89,7 @@ Future<void> loadBytes(
   })
 
 /// Load Pdf from Flutter's asset folder
-static Future<void> loadAsset(
+Future<void> loadAsset(
     String assetPath, {
     String password,
     bool nightMode,
