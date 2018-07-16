@@ -39,9 +39,6 @@ flutter:
 // main.dart
 
 import 'package:flutter/material.dart';
-import 'dart:async';
-
-import 'package:flutter/services.dart';
 import 'package:flutter_pdf_viewer/flutter_pdf_viewer.dart';
 
 void main() => runApp(new MyApp());
