@@ -13,6 +13,12 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 - ScrollBar
 - Pinch to zoom
 
+## Install
+
+[Dart Pub](https://pub.dartlang.org/packages/flutter_pdf_viewer#-readme-tab-)
+
+License: MIT
+
 ## Example
 
 Put `test.pdf` at `assets/test.pdf`
