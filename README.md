@@ -97,7 +97,8 @@ Future<void> FlutterPdfViewer.loadFilePath(
 /// Load Pdf from raw bytes.
 ///
 /// Note - This has a performance limitation,
-/// since flutter uses a message channel to send data to native code.
+/// because flutter uses a message channel to pass data to native code.
+/// (Serialization of large byte arrays can be expensive)
 Future<void> loadBytes(
     Uint8List pdfBytes, {
     String password,
