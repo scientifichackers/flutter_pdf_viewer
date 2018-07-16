@@ -24,7 +24,7 @@ License: MIT
 Put `test.pdf` at `assets/test.pdf`
 
 ```yaml
-// pubspec.yaml
+# pubspec.yaml
 
 flutter:
     ...
