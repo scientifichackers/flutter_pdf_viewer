@@ -73,11 +73,8 @@ $ cd flutter_pdf_viewer/example
 $ flutter run
 ```
 
-**Result**
+## Preview
 <img src="https://i.imgur.com/Uhmk09s.png" height="400" />
-
-
-
 
 ## API
 
