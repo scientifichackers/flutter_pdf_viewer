@@ -10,6 +10,8 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 - Can do *fast*, native XOR - decryption of files.
 - Night Mode.
 - Password protected pdf.
+- ScrollBar
+- Pinch to zoom
 
 ## Example
 
@@ -57,7 +59,7 @@ class MyApp extends StatelessWidget {
 ```
 
 ### Result
-
+<img src="https://i.imgur.com/Uhmk09s.png" height="400" />
 
 
 
