@@ -15,7 +15,9 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 
 ## Install
 
-[Dart Pub](https://pub.dartlang.org/packages/flutter_pdf_viewer#-readme-tab-)
+To use this plugin, follow the [installation instructions](https://pub.dartlang.org/packages/flutter_pdf_viewer#-installing-tab-).
+
+[![pub package](https://img.shields.io/pub/v/flutter_pdf_viewer.svg)](https://pub.dartlang.org/packages/flutter_pdf_viewer)
 
 License: MIT
 
