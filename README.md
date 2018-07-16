@@ -105,6 +105,13 @@ Future<void> loadAsset(
   })
 ```
 
+## Thanks
+
+- [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfViewer) for proving this wonderful, and simple to use library.
+- [#10348](https://github.com/flutter/flutter/issues/10348).
+
+
+
 ---
 
 <a href="https://www.buymeacoffee.com/u75YezVri" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/black_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
