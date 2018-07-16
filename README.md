@@ -66,7 +66,14 @@ class MyApp extends StatelessWidget {
 }
 ```
 
-### Result
+Alternatively,
+```sh
+$ git clone https://github.com/pycampers/flutter_pdf_viewer.git
+$ cd flutter_pdf_viewer/example
+$ flutter run
+```
+
+**Result**
 <img src="https://i.imgur.com/Uhmk09s.png" height="400" />
 
 
