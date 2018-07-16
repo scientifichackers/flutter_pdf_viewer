@@ -104,3 +104,9 @@ Future<void> loadAsset(
     String xorDecryptKey,
   })
 ```
+
+---
+
+<a href="https://www.buymeacoffee.com/u75YezVri" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/black_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
+
+[🐍🏕️](http://www.pycampers.com/)
