@@ -7,7 +7,7 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 ## Features
 
 - Inline Pdf Viewing is not supported. ( A new activity is opened ).
-- Can do *fast*, native XOR - decryption of files.
+- Can do *fast*, in-memory native XOR - decryption of files.
 - Night Mode.
 - Password protected pdf.
 - ScrollBar
