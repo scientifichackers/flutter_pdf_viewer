@@ -16,119 +16,134 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 
 public class PdfActivity extends Activity implements OnLoadCompleteListener {
-  FrameLayout progressOverlay;
-  PDFView pdfView;
+    FrameLayout progressOverlay;
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-    setContentView(R.layout.pdf_viewer_layout);
-    this.pdfView = findViewById(R.id.pdfView);
-    this.progressOverlay = findViewById(R.id.progress_overlay);
-    this.progressOverlay.bringToFront();
+        setContentView(R.layout.pdf_viewer_layout);
+        final PDFView pdfView = findViewById(R.id.pdfView);
+        progressOverlay = findViewById(R.id.progress_overlay);
+        progressOverlay.bringToFront();
 
-    Intent intent = getIntent();
-    Bundle intentOptions = intent.getExtras();
+        System.out.println("Pdf Activity created");
 
-    assert intentOptions != null;
-    String method = intentOptions.getString("method");
-    String xorDecryptKey = intentOptions.getString("xorDecryptKey");
+        Intent intent = getIntent();
+        final Bundle intentOptions = intent.getExtras();
+        assert intentOptions != null;
 
-    PDFView.Configurator config;
+        final DefaultScrollHandle scrollHandle = new DefaultScrollHandle(this);
+        final OnLoadCompleteListener onLoadCompleteListener = this;
 
-    assert method != null;
-    if (xorDecryptKey == null) {
-      switch (method) {
-        case "fromFile":
-          config = this.pdfView.fromUri(Uri.parse(intentOptions.getString(method)));
-          break;
-        case "fromBytes":
-          config = this.pdfView.fromBytes(intentOptions.getByteArray(method));
-          break;
-        case "fromAsset":
-          config = this.pdfView.fromAsset(intentOptions.getString(method));
-          break;
-        default:
-          return;
-      }
-    } else {
-      byte[] pdfBytes;
+        class PrimeThread extends Thread {
+            public void run() {
+                String method = intentOptions.getString("method");
+                String xorDecryptKey = intentOptions.getString("xorDecryptKey");
 
-      switch (method) {
-        case "fromFile":
-          try {
-            pdfBytes = xorEncryptDecrypt(readBytesFromFile(intentOptions.getString(method)), xorDecryptKey);
-          } catch (IOException e) {
-            e.printStackTrace();
-            return;
-          }
-          break;
-        case "fromBytes":
-          pdfBytes = xorEncryptDecrypt(Objects.requireNonNull(intentOptions.getByteArray(method)), xorDecryptKey);
-          break;
-        case "fromAsset":
-          try {
-            pdfBytes = xorEncryptDecrypt(readBytesFromAsset(intentOptions.getString(method)), xorDecryptKey);
-          } catch (IOException e) {
-            e.printStackTrace();
-            return;
-          }
-          break;
-        default: {
-          return;
+                assert method != null;
+
+                PDFView.Configurator configurator;
+                if (xorDecryptKey == null) {
+                    switch (method) {
+                        case "fromFile":
+                            configurator = pdfView.fromUri(Uri.parse(intentOptions.getString(method)));
+                            break;
+                        case "fromBytes":
+                            configurator = pdfView.fromBytes(intentOptions.getByteArray(method));
+                            break;
+                        case "fromAsset":
+                            configurator = pdfView.fromAsset(intentOptions.getString(method));
+                            break;
+                        default:
+                            return;
+                    }
+                } else {
+                    byte[] pdfBytes;
+
+                    switch (method) {
+                        case "fromFile":
+                            try {
+                                pdfBytes = xorEncryptDecrypt(readBytesFromFile(intentOptions.getString(method)), xorDecryptKey);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                return;
+                            }
+
+                            break;
+                        case "fromBytes":
+                            byte[] bytes = intentOptions.getByteArray(method);
+
+                            if (bytes != null) pdfBytes = xorEncryptDecrypt(bytes, xorDecryptKey);
+                            else return;
+
+                            break;
+                        case "fromAsset":
+                            try {
+                                pdfBytes = xorEncryptDecrypt(readBytesFromAsset(intentOptions.getString(method)), xorDecryptKey);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                return;
+                            }
+
+                            break;
+                        default:
+                            return;
+                    }
+                    configurator = pdfView.fromBytes(pdfBytes);
+                }
+
+                configurator
+                    .password(intentOptions.getString("password"))
+                    .scrollHandle(scrollHandle)
+                    .nightMode(intentOptions.getBoolean("nightMode"))
+                    .onLoad(onLoadCompleteListener)
+                    .load();
+            }
         }
-      }
-      config = this.pdfView.fromBytes(pdfBytes);
+        new PrimeThread().start();
     }
 
-    config
-        .password(intentOptions.getString("password"))
-        .scrollHandle(new DefaultScrollHandle(this))
-        .nightMode(intentOptions.getBoolean("nightMode"))
-        .onLoad(this)
-        .load();
-  }
+    private byte[] readBytesFromAsset(String fileName) throws IOException {
+        InputStream inputStream = getApplicationContext().getAssets().open(fileName);
 
-  private byte[] readBytesFromAsset(String fileName) throws IOException {
-    InputStream inputStream = getApplicationContext().getAssets().open(fileName);
+        byte[] bytes = new byte[inputStream.available()];
+        DataInputStream dataInputStream = new DataInputStream(inputStream);
+        dataInputStream.readFully(bytes);
 
-    byte[] bytes = new byte[inputStream.available()];
-    DataInputStream dataInputStream = new DataInputStream(inputStream);
-    dataInputStream.readFully(bytes);
+        dataInputStream.close();
+        inputStream.close();
 
-    dataInputStream.close();
-    inputStream.close();
+        return bytes;
+    }
 
-    return bytes;
-  }
+    private byte[] readBytesFromFile(String fileName) throws IOException {
+        File file = new File(fileName);
+        byte[] bytes = new byte[(int) file.length()];
 
-  private byte[] readBytesFromFile(String fileName) throws IOException {
-    File file = new File(fileName);
-    byte[] bytes = new byte[(int) file.length()];
+        DataInputStream dataInputStream = new DataInputStream(new FileInputStream(file));
+        dataInputStream.readFully(bytes);
+        dataInputStream.close();
 
-    DataInputStream dataInputStream = new DataInputStream(new FileInputStream(file));
-    dataInputStream.readFully(bytes);
-    dataInputStream.close();
+        return bytes;
+    }
 
-    return bytes;
-  }
+    private byte[] xorEncryptDecrypt(byte[] bytes, String key) {
+        int secretKeyLength = key.length();
 
-  private byte[] xorEncryptDecrypt(byte[] bytes, String key) {
-    int secretKeyLength = key.length();
+        System.out.println("decrypting...");
+        for (int index = 0; index < bytes.length; index++)
+            bytes[index] ^= key.charAt(index % secretKeyLength);
+        System.out.println("done!");
 
-    for (int index = 0; index < bytes.length; index++)
-      bytes[index] ^= key.charAt(index % secretKeyLength);
+        return bytes;
+    }
 
-    return bytes;
-  }
-
-  @Override
-  public void loadComplete(int nbPages) {
-    System.out.println("loaded!");
-    progressOverlay.setVisibility(View.GONE);
-  }
+    @Override
+    public void loadComplete(int nbPages) {
+        System.out.println("loaded!");
+        progressOverlay.setVisibility(View.GONE);
+    }
 }
