@@ -46,7 +46,9 @@ public class FlutterPdfViewerPlugin implements MethodCallHandler {
         intent.putExtra(call.method, (byte[]) call.argument("pdfBytes"));
         break;
       case "fromAsset":
-        intent.putExtra(call.method, this.registrar.lookupKeyForAsset((String) call.argument("assetPath")));
+        intent.putExtra(
+            call.method, this.registrar.lookupKeyForAsset((String) call.argument("assetPath"))
+        );
         break;
       default: {
         result.notImplemented();

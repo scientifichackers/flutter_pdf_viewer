@@ -10,9 +10,6 @@ dependencies:
   cupertino_icons: ^0.1.2
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-
   flutter_pdf_viewer:
     path: ../
 

@@ -49,7 +49,9 @@ public class PdfActivity extends Activity implements OnLoadCompleteListener {
                 if (xorDecryptKey == null) {
                     switch (method) {
                         case "fromFile":
-                            configurator = pdfView.fromUri(Uri.parse(intentOptions.getString(method)));
+                            configurator = pdfView.fromUri(
+                                Uri.parse(intentOptions.getString(method))
+                            );
                             break;
                         case "fromBytes":
                             configurator = pdfView.fromBytes(intentOptions.getByteArray(method));
@@ -66,7 +68,10 @@ public class PdfActivity extends Activity implements OnLoadCompleteListener {
                     switch (method) {
                         case "fromFile":
                             try {
-                                pdfBytes = xorEncryptDecrypt(readBytesFromFile(intentOptions.getString(method)), xorDecryptKey);
+                                pdfBytes = xorEncryptDecrypt(
+                                    readBytesFromFile(intentOptions.getString(method)),
+                                    xorDecryptKey
+                                );
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 return;
@@ -82,7 +87,10 @@ public class PdfActivity extends Activity implements OnLoadCompleteListener {
                             break;
                         case "fromAsset":
                             try {
-                                pdfBytes = xorEncryptDecrypt(readBytesFromAsset(intentOptions.getString(method)), xorDecryptKey);
+                                pdfBytes = xorEncryptDecrypt(
+                                    readBytesFromAsset(intentOptions.getString(method)),
+                                    xorDecryptKey
+                                );
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 return;

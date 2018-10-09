@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:typed_data';
+
 import 'package:flutter/services.dart';
+
+import 'downloader.dart';
 
 class FlutterPdfViewer {
   static const MethodChannel _channel =
@@ -11,6 +14,7 @@ class FlutterPdfViewer {
     String password,
     bool nightMode,
     String xorDecryptKey,
+    bool swipeHorizontal,
   }) =>
       _channel.invokeMethod(
         'fromFile',
@@ -19,6 +23,7 @@ class FlutterPdfViewer {
           'password': password,
           'nightMode': nightMode,
           'xorDecryptKey': xorDecryptKey,
+          'swipeHorizontal': swipeHorizontal,
         },
       );
 
@@ -53,4 +58,22 @@ class FlutterPdfViewer {
           'xorDecryptKey': xorDecryptKey,
         },
       );
+
+  static Future<Future<void>> loadUrl(
+    String url, {
+    String password,
+    bool nightMode,
+    String xorDecryptKey,
+    bool cache: true,
+  }) async {
+    return _channel.invokeMethod(
+      'fromFile',
+      {
+        'filePath': 'file://' + await downloadFile(url, cache: cache),
+        'password': password,
+        'nightMode': nightMode,
+        'xorDecryptKey': xorDecryptKey,
+      },
+    );
+  }
 }
