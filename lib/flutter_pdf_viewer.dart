@@ -3,11 +3,13 @@ import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 
-import 'downloader.dart';
+import 'downloader.dart' as downloader;
 
 class FlutterPdfViewer {
   static const MethodChannel _channel =
       const MethodChannel('flutter_pdf_viewer');
+
+  static const downloadFile = downloader.downloadFile;
 
   static Future<void> loadFilePath(
     String filePath, {
@@ -58,22 +60,4 @@ class FlutterPdfViewer {
           'xorDecryptKey': xorDecryptKey,
         },
       );
-
-  static Future<Future<void>> loadUrl(
-    String url, {
-    String password,
-    bool nightMode,
-    String xorDecryptKey,
-    bool cache: true,
-  }) async {
-    return _channel.invokeMethod(
-      'fromFile',
-      {
-        'filePath': 'file://' + await downloadFile(url, cache: cache),
-        'password': password,
-        'nightMode': nightMode,
-        'xorDecryptKey': xorDecryptKey,
-      },
-    );
-  }
 }

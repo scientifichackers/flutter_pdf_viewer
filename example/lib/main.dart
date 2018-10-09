@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_pdf_viewer/flutter_pdf_viewer.dart';
 
@@ -48,13 +46,15 @@ class LoadFromUrlButton extends StatelessWidget {
           ),
         );
 
-        Future<void> showPdfFuture = await FlutterPdfViewer.loadUrl(
+        String filePath = await FlutterPdfViewer.downloadFile(
           'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
         );
 
+        print("filePath: '$filePath'");
+
         Scaffold.of(context).hideCurrentSnackBar();
 
-        await showPdfFuture;
+        FlutterPdfViewer.loadFilePath(filePath);
       },
       child: Text('open from url'),
     );
