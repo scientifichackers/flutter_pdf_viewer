@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_pdf_viewer/flutter_pdf_viewer.dart';
 
@@ -15,7 +17,8 @@ class MyApp extends StatelessWidget {
           child: ListView(
             children: [
               LoadFromAssetButton(),
-              LoadFromUrlButton(),
+              LoadUrlAsFile(),
+              LoadUrlAsBytes(),
             ],
           ),
         ),
@@ -34,7 +37,7 @@ class LoadFromAssetButton extends StatelessWidget {
   }
 }
 
-class LoadFromUrlButton extends StatelessWidget {
+class LoadUrlAsFile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RaisedButton(
@@ -46,7 +49,7 @@ class LoadFromUrlButton extends StatelessWidget {
           ),
         );
 
-        String filePath = await FlutterPdfViewer.downloadFile(
+        String filePath = await FlutterPdfViewer.downloadAsFile(
           'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
         );
 
@@ -56,7 +59,32 @@ class LoadFromUrlButton extends StatelessWidget {
 
         FlutterPdfViewer.loadFilePath(filePath);
       },
-      child: Text('open from url'),
+      child: Text('download + load as file (cached)'),
+    );
+  }
+}
+
+class LoadUrlAsBytes extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return RaisedButton(
+      onPressed: () async {
+        Scaffold.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloading...'),
+            duration: Duration(days: 24),
+          ),
+        );
+
+        Uint8List bytes = await FlutterPdfViewer.downloadAsBytes(
+          'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
+        );
+
+        Scaffold.of(context).hideCurrentSnackBar();
+
+        FlutterPdfViewer.loadBytes(bytes);
+      },
+      child: Text('download + load as bytes (not cached)'),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
@@ -11,20 +12,23 @@ final Future<String> cacheDirFuture = (() async {
   String cacheDir =
       (await getTemporaryDirectory()).path + '/flutter_pdf_viewer';
   await Directory(cacheDir).create();
+  
   return cacheDir;
 })();
 
 Future<bool> fileIsInvalid(File file) async =>
     (await file.stat()).type == FileSystemEntityType.notFound;
 
-final httpClient = new HttpClient();
-
-Future<String> downloadFile(String url, {bool cache: true}) async {
+Future<String> downloadAsFile(String url, {bool cache: true}) async {
   String filepath = '${await cacheDirFuture}/${sha1.convert(utf8.encode(url))}';
-  File file = new File(filepath);
+  File file = File(filepath);
 
   if (!cache || await fileIsInvalid(file))
     await file.writeAsBytes(await http.readBytes(url));
 
-  return 'file://' + filepath;
+  return filepath;
+}
+
+Future<Uint8List> downloadAsBytes(String url) {
+  return http.readBytes(url);
 }

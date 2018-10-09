@@ -11,11 +11,13 @@ import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Socket;
 
 public class PdfActivity extends Activity implements OnLoadCompleteListener {
     FrameLayout progressOverlay;
@@ -32,16 +34,16 @@ public class PdfActivity extends Activity implements OnLoadCompleteListener {
         System.out.println("Pdf Activity created");
 
         Intent intent = getIntent();
-        final Bundle intentOptions = intent.getExtras();
-        assert intentOptions != null;
+        final Bundle opts = intent.getExtras();
+        assert opts != null;
 
         final DefaultScrollHandle scrollHandle = new DefaultScrollHandle(this);
         final OnLoadCompleteListener onLoadCompleteListener = this;
 
         class PrimeThread extends Thread {
             public void run() {
-                String method = intentOptions.getString("method");
-                String xorDecryptKey = intentOptions.getString("xorDecryptKey");
+                String method = opts.getString("method");
+                String xorDecryptKey = opts.getString("xorDecryptKey");
 
                 assert method != null;
 
@@ -50,63 +52,66 @@ public class PdfActivity extends Activity implements OnLoadCompleteListener {
                     switch (method) {
                         case "fromFile":
                             configurator = pdfView.fromUri(
-                                Uri.parse(intentOptions.getString(method))
+                                Uri.parse(opts.getString(method))
                             );
                             break;
                         case "fromBytes":
-                            configurator = pdfView.fromBytes(intentOptions.getByteArray(method));
+                            try {
+                                configurator = pdfView.fromBytes(
+                                    readBytesFromSocket(opts.getInt(method))
+                                );
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                return;
+                            }
                             break;
                         case "fromAsset":
-                            configurator = pdfView.fromAsset(intentOptions.getString(method));
+                            configurator = pdfView.fromAsset(opts.getString(method));
                             break;
                         default:
                             return;
                     }
                 } else {
                     byte[] pdfBytes;
-
-                    switch (method) {
-                        case "fromFile":
-                            try {
+                    try {
+                        switch (method) {
+                            case "fromFile":
                                 pdfBytes = xorEncryptDecrypt(
-                                    readBytesFromFile(intentOptions.getString(method)),
+                                    readBytesFromFile(opts.getString(method)),
                                     xorDecryptKey
                                 );
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                return;
-                            }
 
-                            break;
-                        case "fromBytes":
-                            byte[] bytes = intentOptions.getByteArray(method);
-
-                            if (bytes != null) pdfBytes = xorEncryptDecrypt(bytes, xorDecryptKey);
-                            else return;
-
-                            break;
-                        case "fromAsset":
-                            try {
+                                break;
+                            case "fromBytes":
                                 pdfBytes = xorEncryptDecrypt(
-                                    readBytesFromAsset(intentOptions.getString(method)),
+                                    readBytesFromSocket(opts.getInt(method)),
                                     xorDecryptKey
                                 );
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                return;
-                            }
 
-                            break;
-                        default:
-                            return;
+                                break;
+                            case "fromAsset":
+                                pdfBytes = xorEncryptDecrypt(
+                                    readBytesFromAsset(opts.getString(method)),
+                                    xorDecryptKey
+                                );
+
+                                break;
+                            default:
+                                return;
+                        }
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return;
                     }
+
                     configurator = pdfView.fromBytes(pdfBytes);
                 }
 
                 configurator
-                    .password(intentOptions.getString("password"))
+                    .password(opts.getString("password"))
                     .scrollHandle(scrollHandle)
-                    .nightMode(intentOptions.getBoolean("nightMode"))
+                    .nightMode(opts.getBoolean("nightMode"))
                     .onLoad(onLoadCompleteListener)
                     .load();
             }
@@ -114,10 +119,29 @@ public class PdfActivity extends Activity implements OnLoadCompleteListener {
         new PrimeThread().start();
     }
 
+    private byte[] readBytesFromSocket(int pdfBytesSize) throws IOException {
+        System.out.println(pdfBytesSize);
+        byte[] bytes = new byte[pdfBytesSize];
+
+        Socket socket = new Socket("0.0.0.0", 4567);
+        InputStream inputStream = socket.getInputStream();
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+
+        int readTillNow = 0;
+        while (readTillNow < pdfBytesSize)
+            readTillNow += bufferedInputStream.read(
+                bytes, readTillNow, pdfBytesSize - readTillNow
+            );
+
+        socket.close();
+
+        return bytes;
+    }
+
     private byte[] readBytesFromAsset(String fileName) throws IOException {
         InputStream inputStream = getApplicationContext().getAssets().open(fileName);
-
         byte[] bytes = new byte[inputStream.available()];
+
         DataInputStream dataInputStream = new DataInputStream(inputStream);
         dataInputStream.readFully(bytes);
 
@@ -133,6 +157,7 @@ public class PdfActivity extends Activity implements OnLoadCompleteListener {
 
         DataInputStream dataInputStream = new DataInputStream(new FileInputStream(file));
         dataInputStream.readFully(bytes);
+
         dataInputStream.close();
 
         return bytes;

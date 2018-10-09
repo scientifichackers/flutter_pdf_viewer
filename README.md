@@ -6,11 +6,16 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 
 ## Features
 
-- Can do *fast*, in-memory native XOR - decryption of files.
 - Night Mode.
-- Password protected pdf.
-- ScrollBar
+- Scroll Bar.
 - Pinch to zoom
+- Download PDF from URL.
+
+## Security
+
+- Features *fast*, in-memory native XOR - decryption of files.
+- Password protected pdf.
+- Load PDF from URL without ever touching the disk!
 
 ## Drawbacks
 
@@ -81,35 +86,42 @@ $ flutter run
 ```dart
 import 'package:flutter_pdf_viewer/flutter_pdf_viewer.dart';
 
+
+
 /// Load Pdf from file path.
-/// (Transformed to a File Uri in native code)
+/// (Uses the native file URI parser)
 Future<void> FlutterPdfViewer.loadFilePath(
     String filePath, {
     String password,
     bool nightMode,
     String xorDecryptKey,
-  })
+})
 
 
 /// Load Pdf from raw bytes.
-///
-/// Note - This has a performance limitation,
-/// because flutter uses a message channel to pass data to native code.
-/// (Serialization of large byte arrays can be expensive)
-Future<void> loadBytes(
+Future<void> FlutterPdfViewer.loadBytes(
     Uint8List pdfBytes, {
     String password,
     bool nightMode,
     String xorDecryptKey,
-  })
+})
+
 
 /// Load Pdf from Flutter's asset folder
-Future<void> loadAsset(
+Future<void> FlutterPdfViewer.loadAsset(
     String assetPath, {
     String password,
     bool nightMode,
     String xorDecryptKey,
-  })
+})
+
+
+// Download from url as a file (cached to disk)
+Future<String> FlutterPdfViewer.downloadAsFile(String url, {bool cache: true})
+
+
+// Download from file as bytes (in-memory)
+Future<Uint8List> FlutterPdfViewer.downloadAsBytes(String url)
 ```
 
 ## Thanks
