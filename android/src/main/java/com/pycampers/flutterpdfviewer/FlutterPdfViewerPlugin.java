@@ -29,6 +29,7 @@ public class FlutterPdfViewerPlugin implements MethodCallHandler {
         intent.putExtra("password", (String) call.argument("password"));
         intent.putExtra("nightMode", (Boolean) call.argument("nightMode"));
         intent.putExtra("xorDecryptKey", (String) call.argument("xorDecryptKey"));
+        intent.putExtra("swipeHorizontal", (Boolean) call.argument("swipeHorizontal"));
         intent.putExtra("method", call.method);
 
         switch (call.method) {

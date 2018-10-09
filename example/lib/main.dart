@@ -19,6 +19,7 @@ class MyApp extends StatelessWidget {
               LoadFromAssetButton(),
               LoadUrlAsFile(),
               LoadUrlAsBytes(),
+              LoadHorizontalPdf()
             ],
           ),
         ),
@@ -31,7 +32,9 @@ class LoadFromAssetButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RaisedButton(
-      onPressed: () => FlutterPdfViewer.loadAsset('assets/test.pdf'),
+      onPressed: () {
+        FlutterPdfViewer.loadAsset('assets/test.pdf');
+      },
       child: Text('open from assets'),
     );
   }
@@ -85,6 +88,18 @@ class LoadUrlAsBytes extends StatelessWidget {
         FlutterPdfViewer.loadBytes(bytes);
       },
       child: Text('download + load as bytes (not cached)'),
+    );
+  }
+}
+
+class LoadHorizontalPdf extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return RaisedButton(
+      onPressed: () {
+        FlutterPdfViewer.loadAsset('assets/test.pdf', swipeHorizontal: true);
+      },
+      child: Text('open horizontal pdf'),
     );
   }
 }

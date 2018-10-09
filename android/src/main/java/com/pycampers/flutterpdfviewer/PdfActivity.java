@@ -112,6 +112,7 @@ public class PdfActivity extends Activity implements OnLoadCompleteListener {
                     .password(opts.getString("password"))
                     .scrollHandle(scrollHandle)
                     .nightMode(opts.getBoolean("nightMode"))
+                    .swipeHorizontal(opts.getBoolean("swipeHorizontal"))
                     .onLoad(onLoadCompleteListener)
                     .load();
             }
@@ -133,6 +134,8 @@ public class PdfActivity extends Activity implements OnLoadCompleteListener {
                 bytes, readTillNow, pdfBytesSize - readTillNow
             );
 
+        bufferedInputStream.close();
+        inputStream.close();
         socket.close();
 
         return bytes;
