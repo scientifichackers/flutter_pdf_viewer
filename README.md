@@ -6,16 +6,17 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 
 ## Features
 
-- Night Mode.
-- Scroll Bar.
+- Night Mode
+- Scroll Bar
+- Horizontal swipe
 - Pinch to zoom
-- Download PDF from URL.
+- Download PDF from URL
 
 ## Security
 
 - Features *fast*, in-memory native XOR - decryption of files.
 - Password protected pdf.
-- Load PDF from URL without ever touching the disk!
+- Download and display PDF from URL without ever touching the disk!
 
 ## Drawbacks
 
@@ -95,6 +96,7 @@ Future<void> FlutterPdfViewer.loadFilePath(
     String password,
     bool nightMode,
     String xorDecryptKey,
+    bool swipeHorizontal,
 })
 
 
@@ -104,6 +106,7 @@ Future<void> FlutterPdfViewer.loadBytes(
     String password,
     bool nightMode,
     String xorDecryptKey,
+    bool swipeHorizontal,
 })
 
 
@@ -113,6 +116,7 @@ Future<void> FlutterPdfViewer.loadAsset(
     String password,
     bool nightMode,
     String xorDecryptKey,
+    bool swipeHorizontal,
 })
 
 

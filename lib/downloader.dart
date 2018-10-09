@@ -12,7 +12,7 @@ final Future<String> cacheDirFuture = (() async {
   String cacheDir =
       (await getTemporaryDirectory()).path + '/flutter_pdf_viewer';
   await Directory(cacheDir).create();
-  
+
   return cacheDir;
 })();
 
