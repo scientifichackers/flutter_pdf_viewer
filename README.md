@@ -20,7 +20,10 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 
 ## Drawbacks
 
-- Inline Pdf Viewing is not supported. ( A new activity is opened ).  See [#1](https://github.com/pycampers/flutter_pdf_viewer/issues/1).
+- <s>Inline Pdf Viewing is not supported. ( A new activity is opened ).  See [#1](https://github.com/pycampers/flutter_pdf_viewer/issues/1).</s>
+
+A proof of concept for inline pdfs is ready at the [inline](https://github.com/pycampers/flutter_pdf_viewer/tree/inline) branch.
+    
 
 ## Install
 
