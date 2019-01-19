@@ -11,6 +11,8 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 - Horizontal swipe
 - Pinch to zoom
 - Download PDF from URL
+- Show inline Videos in Pdf
+- Immersive mode
 
 ## Security
 
@@ -35,47 +37,6 @@ License: MIT
 
 ## Example
 
-Put `test.pdf` at `assets/test.pdf`
-
-```yaml
-# pubspec.yaml
-
-flutter:
-    ...
-
-    assets:
-        - assets/test.pdf
-```
-
-```dart
-// main.dart
-
-import 'package:flutter/material.dart';
-import 'package:flutter_pdf_viewer/flutter_pdf_viewer.dart';
-
-void main() => runApp(new MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return new MaterialApp(
-      home: new Scaffold(
-        appBar: new AppBar(
-          title: const Text('Plugin example app'),
-        ),
-        body: new Center(
-          child: RaisedButton(
-            onPressed: () => FlutterPdfViewer.loadAsset('assets/test.pdf'),
-            child: Text('OPEN'),
-          ),
-        ),
-      ),
-    );
-  }
-}
-```
-
-**Alternatively,**
 ```sh
 $ git clone https://github.com/pycampers/flutter_pdf_viewer.git
 $ cd flutter_pdf_viewer/example
@@ -84,52 +45,6 @@ $ flutter run
 
 ## Preview
 <img src="https://i.imgur.com/Uhmk09s.png" height="400" />
-
-## API
-
-```dart
-import 'package:flutter_pdf_viewer/flutter_pdf_viewer.dart';
-
-
-
-/// Load Pdf from file path.
-/// (Uses the native file URI parser)
-Future<void> FlutterPdfViewer.loadFilePath(
-    String filePath, {
-    String password,
-    bool nightMode,
-    String xorDecryptKey,
-    bool swipeHorizontal,
-})
-
-
-/// Load Pdf from raw bytes.
-Future<void> FlutterPdfViewer.loadBytes(
-    Uint8List pdfBytes, {
-    String password,
-    bool nightMode,
-    String xorDecryptKey,
-    bool swipeHorizontal,
-})
-
-
-/// Load Pdf from Flutter's asset folder
-Future<void> FlutterPdfViewer.loadAsset(
-    String assetPath, {
-    String password,
-    bool nightMode,
-    String xorDecryptKey,
-    bool swipeHorizontal,
-})
-
-
-// Download from url as a file (cached to disk)
-Future<String> FlutterPdfViewer.downloadAsFile(String url, {bool cache: true})
-
-
-// Download from file as bytes (in-memory)
-Future<Uint8List> FlutterPdfViewer.downloadAsBytes(String url)
-```
 
 ## Thanks
 

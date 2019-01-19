@@ -1,83 +1,201 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 
-import 'downloader.dart' as downloader;
+import 'downloader.dart';
 
-class FlutterPdfViewer {
-  static const MethodChannel _channel =
-      const MethodChannel('flutter_pdf_viewer');
+const int PDF_BYTES_PORT = 4567;
 
-  static const downloadAsBytes = downloader.downloadAsBytes;
-  static const downloadAsFile = downloader.downloadAsFile;
+class VideoPage {
+  String mode;
+  String xorDecryptKey;
+  String src;
 
-  static Future<void> loadFilePath(
+  VideoPage.fromFile(
     String filePath, {
-    String password,
-    bool nightMode,
     String xorDecryptKey,
-    bool swipeHorizontal,
   }) {
-    return _channel.invokeMethod(
-      'fromFile',
-      {
-        'filePath': 'file://' + filePath,
-        'password': password,
-        'nightMode': nightMode,
-        'xorDecryptKey': xorDecryptKey,
-        'swipeHorizontal': swipeHorizontal,
-      },
-    );
+    mode = "fromFile";
+    src = filePath;
+    this.xorDecryptKey = xorDecryptKey;
   }
 
-  static Future<void> loadBytes(
-    Uint8List pdfBytes, {
-    String password,
-    bool nightMode,
+  VideoPage.fromAsset(
+    String assetPath, {
     String xorDecryptKey,
-    bool swipeHorizontal,
+  }) {
+    mode = "fromAsset";
+    src = assetPath;
+    this.xorDecryptKey = xorDecryptKey;
+  }
+
+  VideoPage.fromUrl(
+    String url, {
+    bool cache: true,
+    Function onDownload,
+    String xorDecryptKey,
+  }) {
+    mode = "fromUrl";
+    src = url;
+    this.xorDecryptKey = xorDecryptKey;
+
+    downloadAsFile(url, cache: cache).then((filePath) {
+      if (onDownload != null) onDownload(filePath);
+    });
+  }
+
+  toJson() {
+    return {'mode': mode, 'src': src, 'xorDecryptKey': xorDecryptKey};
+  }
+}
+
+enum ViewModes {
+  immersive,
+  lean_back,
+  sticky_immersive,
+}
+
+class PdfViewerConfig {
+  String password;
+  String xorDecryptKey;
+  bool nightMode;
+  bool enableSwipe;
+  bool swipeHorizontal;
+  bool autoSpacing;
+  bool pageFling;
+  bool pageSnap;
+  bool enableImmersive;
+  Map<int, VideoPage> videoPages;
+
+  PdfViewerConfig({
+    this.password,
+    this.xorDecryptKey,
+    this.nightMode: false,
+    this.enableSwipe: true,
+    this.swipeHorizontal: false,
+    this.autoSpacing: false,
+    this.pageFling: false,
+    this.pageSnap: false,
+    this.enableImmersive: false,
+    slideShow: false,
+    this.videoPages,
+  }) {
+    if (slideShow) {
+      swipeHorizontal = autoSpacing = pageFling = pageSnap = true;
+    }
+  }
+
+  PdfViewerConfig copy() {
+    return PdfViewerConfig(
+      password: password,
+      xorDecryptKey: xorDecryptKey,
+      nightMode: nightMode,
+      enableSwipe: enableSwipe,
+      swipeHorizontal: swipeHorizontal,
+      autoSpacing: autoSpacing,
+      pageFling: pageFling,
+      pageSnap: pageSnap,
+      enableImmersive: enableImmersive,
+      videoPages: videoPages,
+    );
+  }
+}
+
+MethodChannel channel = const MethodChannel('flutter_pdf_viewer');
+
+String _sha1(str) => sha1.convert(utf8.encode(str)).toString();
+
+_invokeMethod(
+    String name, dynamic src, PdfViewerConfig config, String pdfHash) {
+  if (config == null) {
+    config = PdfViewerConfig();
+  }
+
+  return channel.invokeMethod(
+    name,
+    {
+      'src': src,
+      'password': config.password,
+      'xorDecryptKey': config.xorDecryptKey,
+      'nightMode': config.nightMode,
+      'enableSwipe': config.enableSwipe,
+      'swipeHorizontal': config.swipeHorizontal,
+      'autoSpacing': config.autoSpacing,
+      'pageFling': config.pageFling,
+      'pageSnap': config.pageSnap,
+      'enableImmersive': config.enableImmersive,
+      'videoPages': config.videoPages?.map((int key, VideoPage value) {
+        return MapEntry(key, value.toJson());
+      }),
+      'pdfHash': pdfHash,
+    },
+  );
+}
+
+class PdfViewer {
+  /// Load Pdf from given file path.
+  /// Uses Android's `Uri.parse()`.
+  /// (Note: Adds the `file://` prefix)
+  static Future loadFile(
+    String filePath, {
+    PdfViewerConfig config,
+    Function onLoad,
+  }) async {
+    await _invokeMethod(
+        'fromFile', 'file://' + filePath, config, _sha1('file;$filePath'));
+    if (onLoad != null) await onLoad();
+  }
+
+  /// Load Pdf from raw bytes.
+  static Future loadBytes(
+    Uint8List pdfBytes, {
+    PdfViewerConfig config,
+    Function onLoad,
   }) async {
     int pdfBytesSize = pdfBytes.length;
 
-    ServerSocket server = await ServerSocket.bind('0.0.0.0', 4567);
-    server.listen(
+    ServerSocket pdfServer =
+        await ServerSocket.bind('localhost', PDF_BYTES_PORT);
+    pdfServer.listen(
       (Socket client) {
         client.add(pdfBytes);
         client.close();
-        server.close();
+        pdfServer.close();
       },
     );
 
-    await _channel.invokeMethod(
-      'fromBytes',
-      {
-        'pdfBytesSize': pdfBytesSize,
-        'password': password,
-        'nightMode': nightMode,
-        'xorDecryptKey': xorDecryptKey,
-        'swipeHorizontal': swipeHorizontal,
-      },
-    );
+    await _invokeMethod('fromBytes', pdfBytesSize, config,
+        _sha1('bytes;${sha1.convert(pdfBytes.sublist(0, 64))}'));
+    if (onLoad != null) await onLoad();
   }
 
-  static Future<void> loadAsset(
+  /// Load Pdf from Flutter's asset folder
+  static Future loadAsset(
     String assetPath, {
-    String password,
-    bool nightMode,
-    String xorDecryptKey,
-    bool swipeHorizontal,
-  }) {
-    return _channel.invokeMethod(
-      'fromAsset',
-      {
-        'assetPath': assetPath,
-        'password': password,
-        'nightMode': nightMode,
-        'xorDecryptKey': xorDecryptKey,
-        'swipeHorizontal': swipeHorizontal,
-      },
-    );
+    PdfViewerConfig config,
+    Function onLoad,
+  }) async {
+    await _invokeMethod(
+        'fromAsset', assetPath, config, _sha1("asset;$assetPath"));
+    if (onLoad != null) await onLoad();
+  }
+
+  // Download file from `url` and then show it
+  static Future loadUrl(
+    String url, {
+    PdfViewerConfig config,
+    bool cache: true,
+    Function onDownload,
+    Function onLoad,
+  }) async {
+    String filePath = await downloadAsFile(url, cache: cache);
+    if (onDownload != null) await onDownload(filePath);
+    await _invokeMethod(
+        'fromFile', 'file://' + filePath, config, _sha1("url;$url"));
+    if (onLoad != null) await onLoad();
   }
 }

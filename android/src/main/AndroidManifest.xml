@@ -1,9 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.pycampers.flutterpdfviewer">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <application>
-        <activity
-            android:name=".PdfActivity"
-            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+        <activity android:name=".PdfActivity" />
     </application>
 </manifest>

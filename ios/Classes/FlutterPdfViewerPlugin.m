@@ -1,20 +1,8 @@
 #import "FlutterPdfViewerPlugin.h"
+#import <flutter_pdf_viewer/flutter_pdf_viewer-Swift.h>
 
 @implementation FlutterPdfViewerPlugin
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
-  FlutterMethodChannel* channel = [FlutterMethodChannel
-      methodChannelWithName:@"flutter_pdf_viewer"
-            binaryMessenger:[registrar messenger]];
-  FlutterPdfViewerPlugin* instance = [[FlutterPdfViewerPlugin alloc] init];
-  [registrar addMethodCallDelegate:instance channel:channel];
+  [SwiftFlutterPdfViewerPlugin registerWithRegistrar:registrar];
 }
-
-- (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
-  if ([@"getPlatformVersion" isEqualToString:call.method]) {
-    result([@"iOS " stringByAppendingString:[[UIDevice currentDevice] systemVersion]]);
-  } else {
-    result(FlutterMethodNotImplemented);
-  }
-}
-
 @end
