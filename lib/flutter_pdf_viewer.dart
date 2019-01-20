@@ -10,12 +10,12 @@ import 'downloader.dart';
 
 const int PDF_BYTES_PORT = 4567;
 
-class VideoPage {
+class Video {
   String mode;
   String xorDecryptKey;
   String src;
 
-  VideoPage.fromFile(
+  Video.fromFile(
     String filePath, {
     String xorDecryptKey,
   }) {
@@ -24,7 +24,7 @@ class VideoPage {
     this.xorDecryptKey = xorDecryptKey;
   }
 
-  VideoPage.fromAsset(
+  Video.fromAsset(
     String assetPath, {
     String xorDecryptKey,
   }) {
@@ -33,7 +33,7 @@ class VideoPage {
     this.xorDecryptKey = xorDecryptKey;
   }
 
-  VideoPage.fromUrl(
+  Video.fromUrl(
     String url, {
     bool cache: true,
     Function onDownload,
@@ -53,12 +53,6 @@ class VideoPage {
   }
 }
 
-enum ViewModes {
-  immersive,
-  lean_back,
-  sticky_immersive,
-}
-
 class PdfViewerConfig {
   String password;
   String xorDecryptKey;
@@ -69,7 +63,8 @@ class PdfViewerConfig {
   bool pageFling;
   bool pageSnap;
   bool enableImmersive;
-  Map<int, VideoPage> videoPages;
+  bool autoPlay;
+  Map<int, Video> videoPages;
 
   PdfViewerConfig({
     this.password,
@@ -81,6 +76,7 @@ class PdfViewerConfig {
     this.pageFling: false,
     this.pageSnap: false,
     this.enableImmersive: false,
+    this.autoPlay: false,
     slideShow: false,
     this.videoPages,
   }) {
@@ -128,7 +124,8 @@ _invokeMethod(
       'pageFling': config.pageFling,
       'pageSnap': config.pageSnap,
       'enableImmersive': config.enableImmersive,
-      'videoPages': config.videoPages?.map((int key, VideoPage value) {
+      'autoPlay': config.autoPlay,
+      'videoPages': config.videoPages?.map((int key, Video value) {
         return MapEntry(key, value.toJson());
       }),
       'pdfHash': pdfHash,

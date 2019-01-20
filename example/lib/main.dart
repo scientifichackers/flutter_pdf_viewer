@@ -36,6 +36,7 @@ var choices = [
   'pageFling: true',
   'pageSnap: true',
   'enableImmersive: true',
+  'autoPlay: true',
   'slideshow',
 ];
 
@@ -86,12 +87,13 @@ class FromAssetState extends State<FromAsset> {
               },
               config: PdfViewerConfig(
                 nightMode: _value == 1,
-                swipeHorizontal: _value == 3 || _value == 8,
-                autoSpacing: _value == 4 || _value == 8,
-                pageFling: _value == 5 || _value == 8,
-                pageSnap: _value == 6 || _value == 8,
+                swipeHorizontal: _value == 3 || _value == 9,
+                autoSpacing: _value == 4 || _value == 9,
+                pageFling: _value == 5 || _value == 9,
+                pageSnap: _value == 6 || _value == 9,
                 enableImmersive: _value == 7,
-                videoPages: {8: VideoPage.fromAsset("assets/hard_water.mp4")},
+                autoPlay: _value == 8,
+                videoPages: {8: Video.fromAsset("assets/hard_water.mp4")},
               ),
             );
           },
