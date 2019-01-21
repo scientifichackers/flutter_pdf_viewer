@@ -11,7 +11,7 @@ import java.util.*
 class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : MethodCallHandler {
 
     var timer = Timer()
-    val myApp = registrar.context() as MyApp
+    val pdfApp = registrar.context() as PdfApp
 
     companion object {
         @JvmStatic
@@ -31,14 +31,21 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
 
         val timerTask = object : TimerTask() {
             override fun run() {
-                myApp.withLock {
-                    if (myApp.paused) {
+                pdfApp.withLock {
+                    if (pdfApp.paused) {
                         return
                     }
-                    val currentPage = myApp.currentPage ?: return
+                    pdfApp.withLock {
+                        pdfApp.currentpdfId?.let { pdfId ->
+                            pdfApp.currentPage?.let { page ->
+                                pdfApp.pageRecords[pdfId]?.let {
+                                    it[page] = it[page]!! + periodAsLong
+                                }
+                            }
+                        }
 
-                    myApp.pageRecord[currentPage] =
-                            myApp.pageRecord.getOrPut(currentPage) { 2L } + periodAsLong
+                        println(pdfApp.pageRecords)
+                    }
                 }
             }
         }
@@ -47,21 +54,34 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
         timer.scheduleAtFixedRate(timerTask, 0, periodAsLong)
     }
 
-    override fun onMethodCall(call: MethodCall, result: Result) {
+    fun tryAnalyticsMethods(call: MethodCall, result: Result): Boolean {
         when (call.method) {
             "disableAnalytics" -> {
                 removeTimer()
+                result.success(true)
             }
             "enableAnalytics" -> {
                 removeTimer()
                 scheduleTimer(call.arguments as Int)
-                return result.success(true)
+                result.success(true)
             }
             "getAnalytics" -> {
-                myApp.withLock {
-                    return result.success(myApp.pageRecord)
+                pdfApp.withLock {
+                    result.success(
+                            pdfApp.pageRecords[call.arguments as String? ?: pdfApp.currentpdfId]
+                    )
                 }
             }
+            else -> {
+                return false
+            }
+        }
+        return true
+    }
+
+    override fun onMethodCall(call: MethodCall, result: Result) {
+        if (tryAnalyticsMethods(call, result)) {
+            return
         }
 
         val intent = Intent(registrar.context(), PdfActivity::class.java)
@@ -78,7 +98,7 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
 
         intent.putExtra("password", call.argument<String>("password"))
         intent.putExtra("xorDecryptKey", call.argument<String>("xorDecryptKey"))
-        intent.putExtra("pdfHash", call.argument<String>("pdfHash"))
+        intent.putExtra("pdfId", call.argument<String>("pdfId"))
         intent.putExtra("videoPages", videoPages)
         listOf(
                 "nightMode",

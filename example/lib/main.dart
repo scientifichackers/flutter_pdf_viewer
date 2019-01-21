@@ -178,7 +178,7 @@ class _AnalyticsViewState extends State<AnalyticsView> {
                 RaisedButton(
                   child: Text("getAnalytics()"),
                   onPressed: () async {
-                    Map records = await PdfViewer.getAnalytics();
+                    Map records = await PdfViewer.getAnalytics(null);
                     setState(() => _records = records);
                   },
                 ),

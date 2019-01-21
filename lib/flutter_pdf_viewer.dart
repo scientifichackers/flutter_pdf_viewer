@@ -123,7 +123,7 @@ Future<void> _invokeMethod(
   String name,
   dynamic src,
   PdfViewerConfig config,
-  String pdfHash,
+  String pdfId,
 ) async {
   if (config == null) {
     config = PdfViewerConfig();
@@ -153,7 +153,7 @@ Future<void> _invokeMethod(
       'enableImmersive': config.enableImmersive,
       'autoPlay': config.autoPlay,
       'videoPages': videoPagesMap,
-      'pdfHash': pdfHash,
+      'pdfId': pdfId,
     },
   );
 }
@@ -177,15 +177,21 @@ class PdfViewer {
 
   /// Returns the stored analytics.
   ///
-  /// The analytics are returned for the currently, or most recently opened PDF document.
+  /// [pdfId] is a [String] returned by all the `load*` methods.
+  /// It is simply, an unique identifier assigned to a PDF by the framework,
+  /// based on the function arguments.
+  ///
+  /// If the [pdfId] is set to `null`, the analytics are returned for the currently,
+  /// or most recently opened PDF document.
+  ///
   /// These will not be persisted on disk, only in-memory.
   ///
-  /// The returned value is a Map of page numbers to time spent on that page.
+  /// The returned value is a Map of page numbers to the time [Duration] spent on that page.
   /// (Page numbers start from `1`)
-  static Future<Map<int, Duration>> getAnalytics() async {
-    var map = (await channel.invokeMethod("getAnalytics")).map((page, elapsed) {
-      return MapEntry(page, Duration(milliseconds: elapsed));
-    });
+  static Future<Map<int, Duration>> getAnalytics(String pdfId) async {
+    var map = (await channel.invokeMethod("getAnalytics", pdfId)).map(
+      (page, elapsed) => MapEntry(page, Duration(milliseconds: elapsed)),
+    );
     return Map<int, Duration>.from(map);
   }
 

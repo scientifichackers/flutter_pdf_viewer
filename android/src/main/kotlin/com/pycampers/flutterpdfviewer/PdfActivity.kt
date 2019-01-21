@@ -23,6 +23,7 @@ const val PDF_BYTES_PORT = 4567
 // This thread is used to do heavy tasks, like loading the PDF from disk, decrypting it etc.
 class PdfActivityThread(
         val activity: PdfActivity,
+        val pdfApp: PdfApp,
         val opts: Bundle,
         val pdfView: PDFView,
         val playerController: PlayerController,
@@ -85,6 +86,10 @@ class PdfActivityThread(
         }
 
         configurator.load()
+
+        pdfApp.withLock {
+            pdfApp.currentpdfId = opts.getString("pdfId")
+        }
     }
 }
 
@@ -94,7 +99,7 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
     lateinit var pdfView: PDFView
     lateinit var closeButton: ImageButton
     lateinit var opts: Bundle
-    lateinit var pdfHash: String
+    lateinit var pdfId: String
     lateinit var playerController: PlayerController
 
     var enableImmersive: Boolean = false
@@ -103,7 +108,7 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
     val isPlaying: Boolean
         get() = playerController.isPlaying
 
-    lateinit var myApp: MyApp
+    lateinit var pdfApp: PdfApp
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,7 +131,7 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
         val playerView = findViewById<PlayerView>(R.id.playerView)
         closeButton = findViewById(R.id.closeButton)
 
-        pdfHash = opts.getString("pdfHash")
+        pdfId = opts.getString("pdfId")
 
         playerController = PlayerController(
                 applicationContext,
@@ -136,16 +141,16 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
                 playerView,
                 closeButton
         )
+        pdfApp = application as PdfApp
 
         PdfActivityThread(
                 this,
+                pdfApp,
                 opts,
                 pdfView,
                 playerController,
                 DefaultScrollHandle(this)
         ).start()
-
-        myApp = application as MyApp
     }
 
     lateinit var gestureDetector: GestureDetector
@@ -198,7 +203,7 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
         }
         val sharedPref = getPreferences(Context.MODE_PRIVATE) ?: return
         with(sharedPref.edit()) {
-            putInt(pdfHash, pdfView.currentPage)
+            putInt(pdfId, pdfView.currentPage)
             apply()
         }
     }
@@ -206,19 +211,19 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
     // jump to saved page on initial render of PDF
     override fun onInitiallyRendered(nbPages: Int) {
         val sharedPref = getPreferences(Context.MODE_PRIVATE) ?: return
-        pdfView.jumpTo(sharedPref.getInt(pdfHash, 0))
+        pdfView.jumpTo(sharedPref.getInt(pdfId, 0))
     }
 
     override fun onPause() {
-        myApp.withLock {
-            myApp.paused = true
+        pdfApp.withLock {
+            pdfApp.paused = true
         }
         super.onPause()
     }
 
     override fun onResume() {
-        myApp.withLock {
-            myApp.paused = false
+        pdfApp.withLock {
+            pdfApp.paused = false
         }
         super.onResume()
     }

@@ -29,12 +29,7 @@ class PlayerController(
     var wasFakeJump = false
     var lastVideoPage: Int? = null
 
-    val myApp = context as MyApp
-
-    companion object {
-        @JvmStatic
-        val TAG: String = PlayerController::class.java.simpleName
-    }
+    val pdfApp = context as PdfApp
 
     init {
         //
@@ -111,9 +106,8 @@ class PlayerController(
             return
         }
 
-        myApp.withLock {
-            myApp.currentPage = page + 1
-            myApp.pageStartTime = System.nanoTime()
+        pdfApp.withLock {
+            pdfApp.currentPage = page + 1
         }
 
         val video = videoPages!![page + 1] as HashMap<*, *>?
@@ -124,7 +118,7 @@ class PlayerController(
             }
             return
         }
-0
+        0
         if (autoPlay) {
             playVideo(video, page)
         } else {
