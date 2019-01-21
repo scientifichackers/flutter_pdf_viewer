@@ -2,8 +2,10 @@ package com.pycampers.flutterpdfviewer
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.support.v4.content.LocalBroadcastManager
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -23,11 +25,11 @@ const val PDF_BYTES_PORT = 4567
 // This thread is used to do heavy tasks, like loading the PDF from disk, decrypting it etc.
 class PdfActivityThread(
         val activity: PdfActivity,
-        val pdfApp: PdfApp,
         val opts: Bundle,
         val pdfView: PDFView,
         val playerController: PlayerController,
-        val scrollHandle: DefaultScrollHandle
+        val scrollHandle: DefaultScrollHandle,
+        val onLoad: () -> Unit
 ) : Thread() {
 
     val methodName = opts.getString("name")!!
@@ -86,10 +88,7 @@ class PdfActivityThread(
         }
 
         configurator.load()
-
-        pdfApp.withLock {
-            pdfApp.currentpdfId = opts.getString("pdfId")
-        }
+        onLoad()
     }
 }
 
@@ -101,14 +100,13 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
     lateinit var opts: Bundle
     lateinit var pdfId: String
     lateinit var playerController: PlayerController
+    lateinit var localBroadcastManager: LocalBroadcastManager
 
     var enableImmersive: Boolean = false
     val exoPlayer: ExoPlayer?
         get() = playerController.exoPlayer
     val isPlaying: Boolean
         get() = playerController.isPlaying
-
-    lateinit var pdfApp: PdfApp
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -141,16 +139,22 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
                 playerView,
                 closeButton
         )
-        pdfApp = application as PdfApp
+
+        localBroadcastManager = LocalBroadcastManager.getInstance(applicationContext)
 
         PdfActivityThread(
                 this,
-                pdfApp,
                 opts,
                 pdfView,
                 playerController,
                 DefaultScrollHandle(this)
-        ).start()
+        ) {
+            localBroadcastManager.sendBroadcast(
+                    Intent(ANALYTICS_BROADCAST_ACTION)
+                            .putExtra("name", "pdfId")
+                            .putExtra("value", pdfId)
+            )
+        }.start()
     }
 
     lateinit var gestureDetector: GestureDetector
@@ -215,16 +219,20 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
     }
 
     override fun onPause() {
-        pdfApp.withLock {
-            pdfApp.paused = true
-        }
+        localBroadcastManager.sendBroadcast(
+                Intent(ANALYTICS_BROADCAST_ACTION)
+                        .putExtra("name", "activityPaused")
+                        .putExtra("value", true)
+        )
         super.onPause()
     }
 
     override fun onResume() {
-        pdfApp.withLock {
-            pdfApp.paused = false
-        }
+        localBroadcastManager.sendBroadcast(
+                Intent(ANALYTICS_BROADCAST_ACTION)
+                        .putExtra("name", "activityPaused")
+                        .putExtra("value", false)
+        )
         super.onResume()
     }
 }

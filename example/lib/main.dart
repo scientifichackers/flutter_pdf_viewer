@@ -168,7 +168,7 @@ class AnalyticsView extends StatefulWidget {
 }
 
 class _AnalyticsViewState extends State<AnalyticsView> {
-  Map _records = {};
+  Map _analytics = {};
 
   @override
   Widget build(BuildContext context) {
@@ -179,12 +179,12 @@ class _AnalyticsViewState extends State<AnalyticsView> {
                   child: Text("getAnalytics()"),
                   onPressed: () async {
                     Map records = await PdfViewer.getAnalytics(null);
-                    setState(() => _records = records);
+                    setState(() => _analytics = records);
                   },
                 ),
               ] +
-              _records.keys
-                  .map((page) => Text("$page - ${_records[page]}"))
+              _analytics.keys
+                  .map((page) => Text("$page - ${_analytics[page]}"))
                   .toList()),
     );
   }

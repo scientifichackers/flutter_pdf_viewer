@@ -1,6 +1,8 @@
 package com.pycampers.flutterpdfviewer
 
 import android.content.Context
+import android.content.Intent
+import android.support.v4.content.LocalBroadcastManager
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -29,7 +31,7 @@ class PlayerController(
     var wasFakeJump = false
     var lastVideoPage: Int? = null
 
-    val pdfApp = context as PdfApp
+    val localBroadcastManager: LocalBroadcastManager = LocalBroadcastManager.getInstance(context)
 
     init {
         //
@@ -106,9 +108,11 @@ class PlayerController(
             return
         }
 
-        pdfApp.withLock {
-            pdfApp.currentPage = page + 1
-        }
+        localBroadcastManager.sendBroadcast(
+                Intent(ANALYTICS_BROADCAST_ACTION)
+                        .putExtra("name", "page")
+                        .putExtra("value", page + 1)
+        )
 
         val video = videoPages!![page + 1] as HashMap<*, *>?
         if (video == null) {
@@ -118,7 +122,7 @@ class PlayerController(
             }
             return
         }
-        0
+
         if (autoPlay) {
             playVideo(video, page)
         } else {

@@ -1,17 +1,26 @@
 package com.pycampers.flutterpdfviewer
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Bundle
+import android.support.v4.content.LocalBroadcastManager
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
+import java.lang.IllegalArgumentException
 import java.util.*
 
-class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : MethodCallHandler {
 
-    var timer = Timer()
-    val pdfApp = registrar.context() as PdfApp
+typealias PageRecords = MutableMap<String, MutableMap<Int, Long>>
+
+const val ANALYTICS_BROADCAST_ACTION = "pdf_viewer_analytics"
+
+
+class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : MethodCallHandler {
 
     companion object {
         @JvmStatic
@@ -19,6 +28,59 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
             val channel = MethodChannel(registrar.messenger(), "flutter_pdf_viewer")
             channel.setMethodCallHandler(FlutterPdfViewerPlugin(registrar))
         }
+    }
+
+    val context: Context = registrar.context()
+    var timer = Timer()
+    val broadcastManager: LocalBroadcastManager = LocalBroadcastManager.getInstance(context)
+    var activityPaused = false
+    var currentPdfId: String? = null
+    var currentPage: Int? = null
+    var pageRecords: PageRecords = mutableMapOf()
+
+    fun handleBroadcast(args: Bundle) {
+        println("handleBroadcast - $args")
+
+        when (args.getString("name")) {
+            "page" -> {
+                val page = args.getInt("value")
+                currentPage = page
+                currentPdfId.let {
+                    pageRecords[it]?.let {
+                        if (!it.containsKey(page)) {
+                            it[page] = 0L
+                        }
+                    }
+                }
+            }
+            "activityPaused" -> {
+                activityPaused = args.getBoolean("value")
+            }
+            "pdfId" -> {
+                currentPdfId = args.getString("value")
+                currentPdfId?.let {
+                    if (!pageRecords.containsKey(it)) {
+                        pageRecords[it] = mutableMapOf()
+                    }
+                }
+            }
+            else -> {
+                throw IllegalArgumentException(
+                        "Invalid method name - `${args.getString("name")}`"
+                )
+            }
+        }
+    }
+
+    init {
+        broadcastManager.registerReceiver(
+                object : BroadcastReceiver() {
+                    override fun onReceive(context: Context, intent: Intent) {
+                        handleBroadcast(intent.extras)
+                    }
+                },
+                IntentFilter(ANALYTICS_BROADCAST_ACTION)
+        )
     }
 
     fun removeTimer() {
@@ -31,22 +93,20 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
 
         val timerTask = object : TimerTask() {
             override fun run() {
-                pdfApp.withLock {
-                    if (pdfApp.paused) {
-                        return
-                    }
-                    pdfApp.withLock {
-                        pdfApp.currentpdfId?.let { pdfId ->
-                            pdfApp.currentPage?.let { page ->
-                                pdfApp.pageRecords[pdfId]?.let {
-                                    it[page] = it[page]!! + periodAsLong
-                                }
-                            }
-                        }
+                if (activityPaused) {
+                    return
+                }
 
-                        println(pdfApp.pageRecords)
+                currentPdfId?.let { pdfId ->
+                    currentPage?.let { page ->
+                        println(pageRecords[pdfId])
+                        pageRecords[pdfId]?.let {
+                            it[page] = it[page]!! + periodAsLong
+                        }
                     }
                 }
+
+                println(pageRecords)
             }
         }
 
@@ -66,11 +126,9 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
                 result.success(true)
             }
             "getAnalytics" -> {
-                pdfApp.withLock {
-                    result.success(
-                            pdfApp.pageRecords[call.arguments as String? ?: pdfApp.currentpdfId]
-                    )
-                }
+                result.success(
+                        pageRecords[call.arguments as String? ?: currentPdfId]
+                )
             }
             else -> {
                 return false
@@ -84,7 +142,7 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
             return
         }
 
-        val intent = Intent(registrar.context(), PdfActivity::class.java)
+        val intent = Intent(context, PdfActivity::class.java)
         val videoPages = call.argument<HashMap<Int, HashMap<String, String>>>("videoPages")
 
         videoPages?.mapValues { it: Map.Entry<Int, HashMap<String, String>> ->
@@ -100,6 +158,7 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
         intent.putExtra("xorDecryptKey", call.argument<String>("xorDecryptKey"))
         intent.putExtra("pdfId", call.argument<String>("pdfId"))
         intent.putExtra("videoPages", videoPages)
+
         listOf(
                 "nightMode",
                 "enableSwipe",

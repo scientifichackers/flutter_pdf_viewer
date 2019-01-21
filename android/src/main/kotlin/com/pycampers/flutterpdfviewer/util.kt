@@ -1,7 +1,9 @@
 package com.pycampers.flutterpdfviewer
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.support.v4.content.LocalBroadcastManager
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
@@ -105,3 +107,4 @@ fun getUriForVideoPage(context: Context, videoPage: HashMap<*, *>): Uri {
         }
     }
 }
+

@@ -177,8 +177,8 @@ class PdfViewer {
 
   /// Returns the stored analytics.
   ///
-  /// [pdfId] is a [String] returned by all the `load*` methods.
-  /// It is simply, an unique identifier assigned to a PDF by the framework,
+  /// [pdfId] is a [String] returned by all the `PdfViewer.load*()` methods.
+  /// It is a unique identifier assigned to a PDF document by the framework,
   /// based on the function arguments.
   ///
   /// If the [pdfId] is set to `null`, the analytics are returned for the currently,
