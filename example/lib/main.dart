@@ -176,7 +176,7 @@ class _AnalyticsViewState extends State<AnalyticsView> {
       child: Column(
           children: <Widget>[
                 RaisedButton(
-                  child: Text("getAnalytics()"),
+                  child: Text("getAnalytics(null)"),
                   onPressed: () async {
                     Map records = await PdfViewer.getAnalytics(null);
                     setState(() => _analytics = records);
