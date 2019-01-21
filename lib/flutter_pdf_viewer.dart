@@ -13,6 +13,8 @@ const int _PDF_BYTES_PORT = 4567;
 /// The [pageNumber] is the page which will contain an overlay video. (Page numbers start from `1`)
 ///
 /// The various constructors can be used to describe the source of the Video file.
+///
+/// Note: [xorDecryptKey] is just a stub, and has not been implemented for videos yet.
 class VideoPage {
   int pageNumber;
   String mode;
@@ -58,12 +60,12 @@ class VideoPage {
 ///     Whether to snap pages to screen boundaries.
 /// - [enableImmersive]
 ///     Enables immersive mode, that hides the system UI.
-///     This requires an API level of at least 19 (Kitkat 4.4).-
+///     This requires an API level of at least 19 (Kitkat 4.4).
 /// - [videoPages]
 ///     A list of [VideoPage] objects, to be played as an overlay on the pdf.
 /// - [autoPlay]
 ///     Whether to automatically play the video when the user arrives at the page associated with the video.
-///     This may lead to erroneous behavior if used without [slideShow] enabled.
+///     This may lead to bad UX if used without [slideShow] enabled.
 /// - [slideShow]
 ///     Emulate a slideshow like view, by enabling [swipeHorizontal], [autoSpacing], [pageFling] & [pageSnap].
 class PdfViewerConfig {
@@ -115,7 +117,7 @@ class PdfViewerConfig {
   }
 }
 
-MethodChannel channel = const MethodChannel('flutter_pdf_viewer');
+MethodChannel _platform = const MethodChannel('flutter_pdf_viewer');
 
 String _sha1(str) => sha1.convert(utf8.encode(str)).toString();
 
@@ -138,7 +140,7 @@ Future<void> _invokeMethod(
     };
   });
 
-  await channel.invokeMethod(
+  await _platform.invokeMethod(
     name,
     {
       'src': src,
@@ -164,7 +166,7 @@ class PdfViewer {
   /// The [period] is the time interval between 2 successive analytics recordings.
   /// A smaller Duration, results in more fine-grained timestamps, at the cost of resource usage.
   static Future<void> enableAnalytics(Duration period) {
-    return channel.invokeMethod(
+    return _platform.invokeMethod(
       "enableAnalytics",
       period.inMilliseconds,
     );
@@ -172,7 +174,7 @@ class PdfViewer {
 
   /// Disable recording of analytics.
   static Future<void> disableAnalytics() {
-    return channel.invokeMethod("disableAnalytics", null);
+    return _platform.invokeMethod("disableAnalytics", null);
   }
 
   /// Returns the stored analytics.
@@ -189,7 +191,7 @@ class PdfViewer {
   /// The returned value is a Map of page numbers to the time [Duration] spent on that page.
   /// (Page numbers start from `1`)
   static Future<Map<int, Duration>> getAnalytics(String pdfId) async {
-    var map = (await channel.invokeMethod("getAnalytics", pdfId)).map(
+    var map = (await _platform.invokeMethod("getAnalytics", pdfId)).map(
       (page, elapsed) => MapEntry(page, Duration(milliseconds: elapsed)),
     );
     return Map<int, Duration>.from(map);
