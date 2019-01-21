@@ -13,6 +13,7 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 -   Download PDF from URL
 -   Show inline Videos in Pdf
 -   Immersive mode
+-   Page by page analytics
 
 ## Security
 
@@ -34,7 +35,7 @@ To use this plugin, follow the [installation instructions](https://pub.dartlang.
 
 License: MIT
 
-### NOTE: You must add these lines at `<project root>/android/app/build.gradle`.
+### NOTE: You must add these lines at `android/app/build.gradle`.
 
 ```
 android {
@@ -65,7 +66,5 @@ $ flutter run
 -   [#10348](https://github.com/flutter/flutter/issues/10348).
 
 ---
-
-<a href="https://www.buymeacoffee.com/u75YezVri" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/black_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
 
 [🐍🏕️](http://www.pycampers.com/)
