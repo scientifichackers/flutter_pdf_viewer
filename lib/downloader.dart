@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
 // Holds a Future to a temporary cache directory
-final Future<String> cacheDirFuture = (() async {
+final Future<String> _cacheDirFuture = (() async {
   String cacheDir =
       (await getTemporaryDirectory()).path + '/flutter_pdf_viewer';
   await Directory(cacheDir).create();
@@ -16,14 +16,16 @@ final Future<String> cacheDirFuture = (() async {
   return cacheDir;
 })();
 
-Future<bool> fileIsInvalid(File file) async =>
-    (await file.stat()).type == FileSystemEntityType.notFound;
+Future<bool> _fileIsInvalid(File file) async {
+  return (await file.stat()).type == FileSystemEntityType.notFound;
+}
 
 Future<String> downloadAsFile(String url, {bool cache: true}) async {
-  String filepath = '${await cacheDirFuture}/${sha1.convert(utf8.encode(url))}';
+  String filepath =
+      '${await _cacheDirFuture}/${sha1.convert(utf8.encode(url))}';
   File file = File(filepath);
 
-  if (!cache || await fileIsInvalid(file))
+  if (!cache || await _fileIsInvalid(file))
     await file.writeAsBytes(await http.readBytes(url));
 
   return filepath;
