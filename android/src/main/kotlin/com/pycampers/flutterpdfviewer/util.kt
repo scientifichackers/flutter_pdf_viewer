@@ -6,12 +6,9 @@ import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
-import org.json.JSONObject
 import java.io.*
 import java.net.Socket
 import kotlin.experimental.xor
-import android.provider.SyncStateContract.Helpers.update
-import java.security.MessageDigest
 
 
 @Throws(IOException::class)

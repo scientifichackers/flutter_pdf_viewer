@@ -16,7 +16,6 @@ import com.github.barteksc.pdfviewer.listener.OnRenderListener
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.ui.PlayerView
-import kotlin.concurrent.withLock
 
 
 const val PDF_BYTES_PORT = 4567

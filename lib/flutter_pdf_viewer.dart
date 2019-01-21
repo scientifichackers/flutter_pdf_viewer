@@ -38,6 +38,34 @@ class VideoPage {
   }
 }
 
+/// Represents a general configuration object for tweaking how the PDF is viewed.
+///
+/// - [password]
+///     The password in case of a password protected PDF.
+/// - [xorDecryptKey]
+///     The encryption key for a XOR encrypted file.
+/// - [nightMode]
+///     Whether to display PDF in night mode, with inverted colors.
+/// - [enableSwipe]
+///     Whether to allow swipe gesture to navigate across pages.
+/// - [swipeHorizontal]
+///     Whether to enable horizontal, instead of default, vertical navigation.
+/// - [autoSpacing]
+///     Whether to add dynamic spacing to fit each page on its own on the screen.
+/// - [pageFling]
+///     Whether to make a fling gesture change only a single page like ViewPager
+/// - [pageSnap]
+///     Whether to snap pages to screen boundaries.
+/// - [enableImmersive]
+///     Enables immersive mode, that hides the system UI.
+///     This requires an API level of at least 19 (Kitkat 4.4).-
+/// - [videoPages]
+///     A list of [VideoPage] objects, to be played as an overlay on the pdf.
+/// - [autoPlay]
+///     Whether to automatically play the video when the user arrives at the page associated with the video.
+///     This may lead to erroneous behavior if used without [slideShow] enabled.
+/// - [slideShow]
+///     Emulate a slideshow like view, by enabling [swipeHorizontal], [autoSpacing], [pageFling] & [pageSnap].
 class PdfViewerConfig {
   String password;
   String xorDecryptKey;
@@ -70,6 +98,7 @@ class PdfViewerConfig {
     }
   }
 
+  /// creates a shallow copy of this config object.
   PdfViewerConfig copy() {
     return PdfViewerConfig(
       password: password,
