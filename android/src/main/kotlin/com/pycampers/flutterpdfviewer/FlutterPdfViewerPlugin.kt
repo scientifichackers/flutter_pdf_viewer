@@ -39,8 +39,6 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
     var pageRecords: PageRecords = mutableMapOf()
 
     fun handleBroadcast(args: Bundle) {
-        println("handleBroadcast - $args")
-
         when (args.getString("name")) {
             "page" -> {
                 val page = args.getInt("value")
@@ -99,14 +97,11 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
 
                 currentPdfId?.let { pdfId ->
                     currentPage?.let { page ->
-                        println(pageRecords[pdfId])
                         pageRecords[pdfId]?.let {
                             it[page] = it[page]!! + periodAsLong
                         }
                     }
                 }
-
-                println(pageRecords)
             }
         }
 
