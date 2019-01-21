@@ -8,18 +8,6 @@ import 'package:flutter/services.dart';
 
 const int _PDF_BYTES_PORT = 4567;
 
-/// Called periodically, to report the time user spends on a given page.
-///
-/// - [currentPage]
-///     The page number user is currently on. (Page numbers start from `1`)
-/// - [timeOnPage]
-///     The time spent on this page since last page change.
-///     Note: This will be different from *total* time spent on a page.
-typedef AnalyticsCallback(int currentPage, Duration timeOnPage);
-
-/// Called once, when the PDF file is successfully downloaded.
-typedef OnDownload(String filePath);
-
 /// Describes a page containing a video
 ///
 /// The [pageNumber] is the page which will contain an overlay video. (Page numbers start from `1`)
@@ -62,7 +50,6 @@ class PdfViewerConfig {
   bool enableImmersive;
   bool autoPlay;
   List<VideoPage> videoPages;
-  AnalyticsCallback analyticsCallback;
 
   PdfViewerConfig({
     this.password,
@@ -77,7 +64,6 @@ class PdfViewerConfig {
     this.autoPlay: false,
     slideShow: false,
     this.videoPages,
-    this.analyticsCallback,
   }) {
     if (slideShow) {
       swipeHorizontal = autoSpacing = pageFling = pageSnap = true;
@@ -144,16 +130,10 @@ _invokeMethod(
 }
 
 class PdfViewer {
-  /// Set the callback to be called periodically, with analytics information.
+  /// Enable recording of page by page analytics.
   ///
-  /// The callback is called only when the user is on the PDF activity.
-  ///
-  /// [period] is the time duration between any 2 successive calls.
-  ///
-  /// The given [callback] will replace the currently registered callback, if any.
-  /// To remove a previous handler, simply pass [null].
-  ///
-  /// For more information, look at [AnalyticsCallback].
+  /// The [period] is the time interval between 2 successive analytics recordings.
+  /// A small Duration, results in more fine-grained timestamps, at the cost of resource usage.
   static Future<void> enableAnalytics(Duration period) {
     return channel.invokeMethod(
       "enableAnalytics",
@@ -161,10 +141,18 @@ class PdfViewer {
     );
   }
 
+  /// Disable recording of analytics.
   static Future<void> disableAnalytics() {
     return channel.invokeMethod("disableAnalytics", null);
   }
 
+  /// Returns the stored analytics.
+  ///
+  /// The analytics are returned for the currently, or most recently opened PDF document.
+  /// These will not be persisted on disk, only in-memory.
+  ///
+  /// The returned value is a Map of page numbers to time spent on that page.
+  /// (Page numbers start from `1`)
   static Future<Map<int, Duration>> getAnalytics() async {
     var map = (await channel.invokeMethod("getAnalytics")).map((page, elapsed) {
       return MapEntry(page, Duration(milliseconds: elapsed));
