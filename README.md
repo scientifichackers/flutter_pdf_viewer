@@ -1,8 +1,8 @@
 # flutter pdf viewer
 
-**Android Only!**
+A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfViewer).
 
-A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfViewer), which is based on [PdfiumAndroid](https://github.com/barteksc/PdfiumAndroid)
+*P.S. Android Only!*
 
 ## Features
 
@@ -17,7 +17,7 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 
 ## Security
 
--   Features _fast_, in-memory native XOR - decryption of files.
+-   Features _fast_ native speed XOR - decryption of files.
 -   Password protected pdf.
 -   Download and display PDF from URL without ever touching the disk!
 
@@ -25,7 +25,7 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 
 -   <s>Inline Pdf Viewing is not supported. ( A new activity is opened ). See [#1](https://github.com/pycampers/flutter_pdf_viewer/issues/1).</s>
 
-A proof of concept for inline pdfs is ready at the [inline](https://github.com/pycampers/flutter_pdf_viewer/tree/inline) branch.
+    A proof of concept for inline PDFs is available at the [inline](https://github.com/pycampers/flutter_pdf_viewer/tree/inline) branch.
 
 ## Install
 
@@ -35,7 +35,7 @@ To use this plugin, follow the [installation instructions](https://pub.dartlang.
 
 License: MIT
 
-### NOTE: You must add these lines at `android/app/build.gradle`.
+#### NOTE: You must add these lines at `android/app/build.gradle`.
 
 ```
 android {
