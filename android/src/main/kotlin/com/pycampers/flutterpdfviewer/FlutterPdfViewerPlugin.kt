@@ -41,26 +41,13 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
     fun handleBroadcast(args: Bundle) {
         when (args.getString("name")) {
             "page" -> {
-                val page = args.getInt("value")
-                currentPage = page
-                currentPdfId.let {
-                    pageRecords[it]?.let {
-                        if (!it.containsKey(page)) {
-                            it[page] = 0L
-                        }
-                    }
-                }
+                currentPage = args.getInt("value")
             }
             "activityPaused" -> {
                 activityPaused = args.getBoolean("value")
             }
             "pdfId" -> {
                 currentPdfId = args.getString("value")
-                currentPdfId?.let {
-                    if (!pageRecords.containsKey(it)) {
-                        pageRecords[it] = mutableMapOf()
-                    }
-                }
             }
             else -> {
                 throw IllegalArgumentException(
@@ -97,8 +84,15 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
 
                 currentPdfId?.let { pdfId ->
                     currentPage?.let { page ->
-                        pageRecords[pdfId]?.let {
-                            it[page] = it[page]!! + periodAsLong
+                        if (pageRecords[pdfId] == null) {
+                            pageRecords[pdfId] = mutableMapOf()
+                        }
+                        pageRecords[pdfId]!!.let {
+                            it[page] = if (it[page] == null) {
+                                0
+                            } else {
+                                it[page]!! + periodAsLong
+                            }
                         }
                     }
                 }

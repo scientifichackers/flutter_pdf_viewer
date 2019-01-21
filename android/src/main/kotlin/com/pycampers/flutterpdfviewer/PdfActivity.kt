@@ -81,10 +81,9 @@ class PdfActivityThread(
                 .onLoad(activity)
                 .onRender(activity)
                 .scrollHandle(scrollHandle)
-                .onTap(playerController)
 
         if (playerController.videoPages != null) {
-            configurator = configurator.onPageChange(playerController)
+            configurator = configurator.onPageChange(playerController).onTap(playerController)
         }
 
         configurator.load()

@@ -98,15 +98,11 @@ class PlayerController(
         isPlaying = false
     }
 
-    var shouldPlayVideo = false
-    lateinit var videoToByPlayed: HashMap<*, *>
+    var isVideoPage = false
+    var currentVideo: HashMap<*, *>? = null
 
     override fun onPageChanged(page: Int, pageCount: Int) {
-        shouldPlayVideo = false
-        if (wasFakeJump) {
-            wasFakeJump = false
-            return
-        }
+        isVideoPage = false
 
         localBroadcastManager.sendBroadcast(
                 Intent(ANALYTICS_BROADCAST_ACTION)
@@ -115,32 +111,31 @@ class PlayerController(
         )
 
         val video = videoPages!![page + 1] as HashMap<*, *>?
-        if (video == null) {
-            if (isPlaying) {
-                hidePlayer()
-                stopPlayer()
+        if (video != null) {
+            isVideoPage = true
+            currentVideo = video
+            if (autoPlay && !wasFakeJump) {
+                playVideo(video)
             }
-            return
+        } else if (isPlaying) {
+            hidePlayer()
+            stopPlayer()
         }
 
-        if (autoPlay) {
-            playVideo(video, page)
-        } else {
-            videoToByPlayed = video
-            shouldPlayVideo = true
+        if (wasFakeJump) {
+            wasFakeJump = false
         }
     }
 
-    fun playVideo(video: HashMap<*, *>, page: Int) {
+    fun playVideo(video: HashMap<*, *>) {
         showPlayer()
         startPlayer(getMediaSourceFromUri(context, getUriForVideoPage(context, video)))
-        lastVideoPage = page
+        lastVideoPage = pdfView.currentPage
     }
 
     override fun onTap(e: MotionEvent?): Boolean {
-        if (shouldPlayVideo) {
-            playVideo(videoToByPlayed, pdfView.currentPage)
-            shouldPlayVideo = false
+        if (isVideoPage) {
+            playVideo(currentVideo ?: return false)
             return true
         }
         return false

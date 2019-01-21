@@ -191,9 +191,10 @@ class PdfViewer {
   /// The returned value is a Map of page numbers to the time [Duration] spent on that page.
   /// (Page numbers start from `1`)
   static Future<Map<int, Duration>> getAnalytics(String pdfId) async {
-    var map = (await _platform.invokeMethod("getAnalytics", pdfId)).map(
+    var map = (await _platform.invokeMethod("getAnalytics", pdfId))?.map(
       (page, elapsed) => MapEntry(page, Duration(milliseconds: elapsed)),
     );
+    if (map == null) map = {};
     return Map<int, Duration>.from(map);
   }
 
