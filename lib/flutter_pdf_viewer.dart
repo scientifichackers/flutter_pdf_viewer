@@ -90,7 +90,7 @@ MethodChannel channel = const MethodChannel('flutter_pdf_viewer');
 
 String _sha1(str) => sha1.convert(utf8.encode(str)).toString();
 
-_invokeMethod(
+Future<void> _invokeMethod(
   String name,
   dynamic src,
   PdfViewerConfig config,
@@ -133,7 +133,7 @@ class PdfViewer {
   /// Enable recording of page by page analytics.
   ///
   /// The [period] is the time interval between 2 successive analytics recordings.
-  /// A small Duration, results in more fine-grained timestamps, at the cost of resource usage.
+  /// A smaller Duration, results in more fine-grained timestamps, at the cost of resource usage.
   static Future<void> enableAnalytics(Duration period) {
     return channel.invokeMethod(
       "enableAnalytics",
@@ -163,20 +163,17 @@ class PdfViewer {
   /// Load Pdf from [filePath].
   ///
   /// Uses Android's `Uri.parse()` internally. (After adding the `file://` prefix)
-  static Future<void> loadFile(
+  static Future<String> loadFile(
     String filePath, {
     PdfViewerConfig config,
   }) async {
-    await _invokeMethod(
-      'fromFile',
-      'file://' + filePath,
-      config,
-      _sha1('file;$filePath'),
-    );
+    String hash = _sha1('file;$filePath');
+    await _invokeMethod('fromFile', 'file://' + filePath, config, hash);
+    return hash;
   }
 
   /// Load Pdf from raw bytes.
-  static Future<void> loadBytes(Uint8List pdfBytes,
+  static Future<String> loadBytes(Uint8List pdfBytes,
       {PdfViewerConfig config}) async {
     int pdfBytesSize = pdfBytes.length;
 
@@ -190,24 +187,18 @@ class PdfViewer {
       },
     );
 
-    await _invokeMethod(
-      'fromBytes',
-      pdfBytesSize,
-      config,
-      _sha1('bytes;${sha1.convert(pdfBytes.sublist(0, 64))}'),
-    );
+    String hash = _sha1('bytes;${sha1.convert(pdfBytes.sublist(0, 64))}');
+    await _invokeMethod('fromBytes', pdfBytesSize, config, hash);
+    return hash;
   }
 
   /// Load Pdf from Flutter's asset folder
-  static Future<void> loadAsset(
+  static Future<String> loadAsset(
     String assetPath, {
     PdfViewerConfig config,
   }) async {
-    await _invokeMethod(
-      'fromAsset',
-      assetPath,
-      config,
-      _sha1("asset;$assetPath"),
-    );
+    String hash = _sha1("asset;$assetPath");
+    await _invokeMethod('fromAsset', assetPath, config, hash);
+    return hash;
   }
 }

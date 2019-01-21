@@ -12,6 +12,7 @@ import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.ExoPlayerFactory
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.ui.PlayerView
+import kotlin.concurrent.withLock
 
 
 class PlayerController(
@@ -111,8 +112,10 @@ class PlayerController(
             return
         }
 
-        myApp.currentPage = page + 1
-        myApp.pageStartTime = System.nanoTime()
+        myApp.withLock {
+            myApp.currentPage = page + 1
+            myApp.pageStartTime = System.nanoTime()
+        }
 
         val video = videoPages!![page + 1] as HashMap<*, *>?
         if (video == null) {

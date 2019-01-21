@@ -31,13 +31,15 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
 
         val timerTask = object : TimerTask() {
             override fun run() {
-                if (myApp.paused) {
-                    return
-                }
-                myApp.pageRecord[myApp.currentPage ?: return] =
-                        myApp.pageRecord.getOrPut(myApp.currentPage ?: return) { 2L } + periodAsLong
+                myApp.withLock {
+                    if (myApp.paused) {
+                        return
+                    }
+                    val currentPage = myApp.currentPage ?: return
 
-                println(myApp.pageRecord)
+                    myApp.pageRecord[currentPage] =
+                            myApp.pageRecord.getOrPut(currentPage) { 2L } + periodAsLong
+                }
             }
         }
 
@@ -56,7 +58,9 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
                 return result.success(true)
             }
             "getAnalytics" -> {
-                return result.success(myApp.pageRecord)
+                myApp.withLock {
+                    return result.success(myApp.pageRecord)
+                }
             }
         }
 
