@@ -3,7 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdf_viewer/main.dart';
 
-void main() => runApp(new MyApp());
+void main() {
+  runApp(new MyApp());
+  PdfViewer.enableAnalytics(Duration(milliseconds: 500));
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -19,6 +22,7 @@ class MyApp extends StatelessWidget {
               FromAsset(),
               FromUrl(),
               FromBytes(),
+              AnalyticsView(),
             ],
           ),
         ),
@@ -81,10 +85,7 @@ class FromAssetState extends State<FromAsset> {
           child: Text("loadAsset()"),
           onPressed: () {
             PdfViewer.loadAsset(
-              'assets/meghshala.pdf',
-              onLoad: () {
-                print('PDF loaded!');
-              },
+              'assets/test.pdf',
               config: PdfViewerConfig(
                 nightMode: _value == 1,
                 swipeHorizontal: _value == 3 || _value == 9,
@@ -93,7 +94,7 @@ class FromAssetState extends State<FromAsset> {
                 pageSnap: _value == 6 || _value == 9,
                 enableImmersive: _value == 7,
                 autoPlay: _value == 8,
-                videoPages: {8: Video.fromAsset("assets/hard_water.mp4")},
+                videoPages: [VideoPage.fromAsset(8, "assets/buck_bunny.mp4")],
               ),
             );
           },
@@ -116,18 +117,17 @@ class FromUrl extends StatelessWidget {
               duration: Duration(days: 24),
             ),
           );
-          PdfViewer.loadUrl(
+
+          String filePath = await downloadAsFile(
             'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
-            onDownload: (filePath) {
-              Scaffold.of(context).hideCurrentSnackBar();
-              print('Downloaded - $filePath');
-            },
-            onLoad: () {
-              print('PDF loaded!');
-            },
           );
+
+          Scaffold.of(context).hideCurrentSnackBar();
+          print('Downloaded - $filePath');
+
+          PdfViewer.loadFile(filePath);
         },
-        child: Text('loadUrl(cache: True)'),
+        child: Text('downloadAsFile(cache: true) -> loadFile()'),
       ),
     );
   }
@@ -154,15 +154,38 @@ class FromBytes extends StatelessWidget {
           print('Downloaded as bytes');
           Scaffold.of(context).hideCurrentSnackBar();
 
-          PdfViewer.loadBytes(
-            bytes,
-            onLoad: () {
-              print('PDF loaded!');
-            },
-          );
+          PdfViewer.loadBytes(bytes);
         },
         child: Text('downloadAsBytes(cache: false) -> loadBytes()'),
       ),
+    );
+  }
+}
+
+class AnalyticsView extends StatefulWidget {
+  @override
+  _AnalyticsViewState createState() => _AnalyticsViewState();
+}
+
+class _AnalyticsViewState extends State<AnalyticsView> {
+  Map _records = {};
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Column(
+          children: <Widget>[
+                RaisedButton(
+                  child: Text("getAnalytics()"),
+                  onPressed: () async {
+                    Map records = await PdfViewer.getAnalytics();
+                    setState(() => _records = records);
+                  },
+                ),
+              ] +
+              _records.keys
+                  .map((page) => Text("$page - ${_records[page]}"))
+                  .toList()),
     );
   }
 }
