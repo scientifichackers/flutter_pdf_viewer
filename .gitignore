@@ -7,8 +7,8 @@ pubspec.lock
 
 build/
 
-.idea
-
+.idea/
+android/.idea/*
 
 # Created by https://www.gitignore.io/api/flutter
 # Edit at https://www.gitignore.io/?templates=flutter
