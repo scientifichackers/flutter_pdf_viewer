@@ -28,41 +28,40 @@ class PdfActivityThread(
         val opts: Bundle,
         val pdfView: PDFView,
         val playerController: PlayerController,
-        val scrollHandle: DefaultScrollHandle,
-        val onLoad: () -> Unit
+        val scrollHandle: DefaultScrollHandle
 ) : Thread() {
 
     val methodName = opts.getString("name")!!
     val xorDecryptKey: String? = opts.getString("xorDecryptKey")
 
     fun buildConfigurator(): PDFView.Configurator? {
-        if (xorDecryptKey == null) {
-            return when (methodName) {
+        xorDecryptKey?.let {
+            val bytes = when (methodName) {
                 "fromFile" -> {
-                    pdfView.fromUri(Uri.parse(opts.getString("src")))
+                    readBytesFromFile(opts.getString("src"))
                 }
                 "fromBytes" -> {
-                    pdfView.fromBytes(readBytesFromSocket(opts.getInt("src"), PDF_BYTES_PORT))
+                    readBytesFromSocket(opts.getInt("src"), PDF_BYTES_PORT)
                 }
                 else -> {
-                    pdfView.fromAsset(opts.getString("src"))
+                    readBytesFromAsset(activity, opts.getString("src"))
                 }
             }
+            xorEncryptDecrypt(bytes, it)
+            return pdfView.fromBytes(bytes)
         }
 
-        val bytes = when (methodName) {
+        return when (methodName) {
             "fromFile" -> {
-                readBytesFromFile(opts.getString("src"))
+                pdfView.fromUri(Uri.parse(opts.getString("src")))
             }
             "fromBytes" -> {
-                readBytesFromSocket(opts.getInt("src"), PDF_BYTES_PORT)
+                pdfView.fromBytes(readBytesFromSocket(opts.getInt("src"), PDF_BYTES_PORT))
             }
             else -> {
-                readBytesFromAsset(activity, opts.getString("src"))
+                pdfView.fromAsset(opts.getString("src"))
             }
         }
-
-        return pdfView.fromBytes(xorEncryptDecrypt(bytes, xorDecryptKey))
     }
 
 
@@ -83,11 +82,12 @@ class PdfActivityThread(
                 .scrollHandle(scrollHandle)
 
         if (playerController.videoPages != null) {
-            configurator = configurator.onPageChange(playerController).onTap(playerController)
+            configurator = configurator
+                    .onPageChange(playerController)
+                    .onTap(playerController)
         }
 
         configurator.load()
-        onLoad()
     }
 }
 
@@ -147,13 +147,7 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
                 pdfView,
                 playerController,
                 DefaultScrollHandle(this)
-        ) {
-            localBroadcastManager.sendBroadcast(
-                    Intent(ANALYTICS_BROADCAST_ACTION)
-                            .putExtra("name", "pdfId")
-                            .putExtra("value", pdfId)
-            )
-        }.start()
+        ).start()
     }
 
     lateinit var gestureDetector: GestureDetector
@@ -191,6 +185,12 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
 
     override fun loadComplete(nbPages: Int) {
         progressOverlay.visibility = View.GONE
+
+        localBroadcastManager.sendBroadcast(
+                Intent(ANALYTICS_BROADCAST_ACTION)
+                        .putExtra("name", "pdfId")
+                        .putExtra("value", pdfId)
+        )
     }
 
     override fun onDestroy() {

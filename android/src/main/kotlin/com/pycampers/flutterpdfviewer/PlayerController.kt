@@ -129,7 +129,7 @@ class PlayerController(
 
     fun playVideo(video: HashMap<*, *>) {
         showPlayer()
-        startPlayer(getMediaSourceFromUri(context, getUriForVideoPage(context, video)))
+        startPlayer(getMediaSourceForVideo(context, video))
         lastVideoPage = pdfView.currentPage
     }
 

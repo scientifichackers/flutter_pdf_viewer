@@ -127,7 +127,7 @@ class FromUrl extends StatelessWidget {
 
           PdfViewer.loadFile(filePath);
         },
-        child: Text('downloadAsFile(cache: true) -> loadFile()'),
+        child: Text('loadFile(downloadAsFile(cache: true))'),
       ),
     );
   }
@@ -156,7 +156,7 @@ class FromBytes extends StatelessWidget {
 
           PdfViewer.loadBytes(bytes);
         },
-        child: Text('downloadAsBytes(cache: false) -> loadBytes()'),
+        child: Text('loadBytes(downloadAsBytes())'),
       ),
     );
   }

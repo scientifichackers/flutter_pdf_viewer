@@ -1,11 +1,11 @@
 package com.pycampers.flutterpdfviewer
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
-import android.support.v4.content.LocalBroadcastManager
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.upstream.ByteArrayDataSource
+import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import java.io.*
@@ -13,14 +13,13 @@ import java.net.Socket
 import kotlin.experimental.xor
 
 
-@Throws(IOException::class)
 fun readBytesFromSocket(size: Int, port: Int): ByteArray {
     val bytes = ByteArray(size)
     var done = 0
 
-    Socket("localhost", port).use {
-        it.getInputStream().use {
-            BufferedInputStream(it).use {
+    Socket("localhost", port).use { socket ->
+        socket.getInputStream().use { inputStream ->
+            BufferedInputStream(inputStream).use {
                 while (done < size) {
                     done += it.read(bytes, done, size - done)
                 }
@@ -31,13 +30,12 @@ fun readBytesFromSocket(size: Int, port: Int): ByteArray {
     return bytes
 }
 
-@Throws(IOException::class)
 fun readBytesFromAsset(context: Context, assetPath: String): ByteArray {
     val inputStream = context.assets.open(assetPath)
     val bytes = ByteArray(inputStream.available())
 
-    inputStream.use {
-        DataInputStream(it).use {
+    inputStream.use { stream ->
+        DataInputStream(stream).use {
             it.readFully(bytes)
         }
     }
@@ -45,13 +43,12 @@ fun readBytesFromAsset(context: Context, assetPath: String): ByteArray {
     return bytes
 }
 
-@Throws(IOException::class)
 fun readBytesFromFile(pathname: String?): ByteArray {
     val file = File(pathname!!)
     val bytes = ByteArray(file.length().toInt())
 
-    FileInputStream(file).use {
-        DataInputStream(it).use {
+    FileInputStream(file).use { fileInputStream ->
+        DataInputStream(fileInputStream).use {
             it.readFully(bytes)
         }
     }
@@ -59,23 +56,12 @@ fun readBytesFromFile(pathname: String?): ByteArray {
     return bytes
 }
 
-fun xorEncryptDecrypt(bytes: ByteArray, key: String): ByteArray {
-    val keyAsInt = key.map { it.toByte() }
+fun xorEncryptDecrypt(bytes: ByteArray, key: String) {
+    val keyAsIntList = key.map { it.toByte() }
     val len = key.length
-
-    bytes.mapIndexed { index, byte -> byte xor keyAsInt[index % len] }
-
-    return bytes
-}
-
-
-fun getMediaSourceFromUri(context: Context, uri: Uri): MediaSource {
-    return ExtractorMediaSource.Factory(
-            DefaultDataSourceFactory(
-                    context,
-                    Util.getUserAgent(context, "com.pycampers.flutterpdfviewer")
-            )
-    ).createMediaSource(uri)
+    for (i in 0 until bytes.size) {
+        bytes[i] = bytes[i] xor keyAsIntList[i % len]
+    }
 }
 
 fun copyAssetToFile(context: Context, assetPath: String): File {
@@ -91,20 +77,59 @@ fun copyAssetToFile(context: Context, assetPath: String): File {
     return outFile
 }
 
-fun getUriForVideoPage(context: Context, videoPage: HashMap<*, *>): Uri {
-    val src = videoPage["src"] as String
-    val mode = videoPage["mode"] as String
-//    val xorDecryptKey = videoPage["xorDecryptKey"] as String
+fun getMediaSourceFromUri(context: Context, uri: Uri): MediaSource {
+    return ExtractorMediaSource
+            .Factory(
+                    DefaultDataSourceFactory(
+                            context,
+                            Util.getUserAgent(context, "com.pycampers.flutterpdfviewer")
+                    )
+            )
+            .createMediaSource(uri)
+}
 
-    return when (mode) {
-        "fromAsset" -> Uri.fromFile(copyAssetToFile(context, src))
-        "fromFile" -> Uri.parse(src)
-        "fromUrl" -> Uri.parse(src)
+fun getMediaSourceFromBytes(bytes: ByteArray): MediaSource {
+    return ExtractorMediaSource
+            .Factory(DataSource.Factory { ByteArrayDataSource(bytes) })
+            .createMediaSource(Uri.EMPTY)
+
+}
+
+fun getMediaSourceForVideo(context: Context, video: HashMap<*, *>): MediaSource {
+    val src = video["src"] as String
+    val mode = video["mode"] as String
+
+    (video["xorDecryptKey"] as String?)?.let {
+        val bytes = when (mode) {
+            "fromAsset" -> {
+                readBytesFromAsset(context, src)
+            }
+            "fromFile" -> {
+                readBytesFromFile(src)
+            }
+            else -> {
+                throw IllegalArgumentException(
+                        "provided video has incorrect mode (`$mode`)"
+                )
+            }
+        }
+        xorEncryptDecrypt(bytes, it)
+        return getMediaSourceFromBytes(bytes)
+    }
+
+    val uri = when (mode) {
+        "fromAsset" -> {
+            Uri.fromFile(copyAssetToFile(context, src))
+        }
+        "fromFile" -> {
+            Uri.parse(src)
+        }
         else -> {
             throw IllegalArgumentException(
-                    "provided videoPage has incorrect mode (`$mode`)"
+                    "provided video has incorrect mode (`$mode`)"
             )
         }
     }
+    return getMediaSourceFromUri(context, uri)
 }
 

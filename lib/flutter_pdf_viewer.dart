@@ -13,8 +13,6 @@ const int _PDF_BYTES_PORT = 4567;
 /// The [pageNumber] is the page which will contain an overlay video. (Page numbers start from `1`)
 ///
 /// The various constructors can be used to describe the source of the Video file.
-///
-/// Note: [xorDecryptKey] is just a stub, and has not been implemented for videos yet.
 class VideoPage {
   int pageNumber;
   String mode;
