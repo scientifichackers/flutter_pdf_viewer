@@ -13,9 +13,11 @@ import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.lang.IllegalArgumentException
 import java.util.*
+import kotlin.collections.HashMap
 
 
 typealias PageRecords = MutableMap<String, MutableMap<Int, Long>>
+typealias VideoPages = HashMap<Int, HashMap<String, String>>
 
 const val ANALYTICS_BROADCAST_ACTION = "pdf_viewer_analytics"
 
@@ -88,11 +90,8 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
                             pageRecords[pdfId] = mutableMapOf()
                         }
                         pageRecords[pdfId]!!.let {
-                            it[page] = if (it[page] == null) {
-                                0
-                            } else {
-                                it[page]!! + periodAsLong
-                            }
+                            val stored = it[page]
+                            it[page] = if (stored != null) stored + periodAsLong else 0
                         }
                     }
                 }
@@ -132,21 +131,16 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
         }
 
         val intent = Intent(context, PdfActivity::class.java)
-        val videoPages = call.argument<HashMap<Int, HashMap<String, String>>>("videoPages")
-
-        videoPages?.mapValues { it: Map.Entry<Int, HashMap<String, String>> ->
-            if (it.value["mode"] == "fromAsset") {
-                it.value["src"] = registrar.lookupKeyForAsset(it.value["src"])
-            }
-            it.value
-        }
-
         intent.putExtra("name", call.method)
 
-        intent.putExtra("password", call.argument<String>("password"))
-        intent.putExtra("xorDecryptKey", call.argument<String>("xorDecryptKey"))
-        intent.putExtra("pdfId", call.argument<String>("pdfId"))
-        intent.putExtra("videoPages", videoPages)
+        val videoPages = call.argument<VideoPages>("videoPages")
+                ?.mapValues {
+                    if (it.value["mode"] == "fromAsset") {
+                        it.value["src"] = registrar.lookupKeyForAsset(it.value["src"])
+                    }
+                    it.value
+                }
+        intent.putExtra("videoPages", videoPages as HashMap)
 
         listOf(
                 "nightMode",
@@ -157,9 +151,12 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
                 "pageSnap",
                 "enableImmersive",
                 "autoPlay"
-        ).forEach {
-            intent.putExtra(it, call.argument<Boolean>(it)!!)
-        }
+        ).forEach { intent.putExtra(it, call.argument<Boolean>(it)!!) }
+        listOf(
+                "password",
+                "xorDecryptKey",
+                "pdfId"
+        ).forEach { intent.putExtra(it, call.argument<String>(it)) }
 
         when (call.method) {
             "fromFile" -> {

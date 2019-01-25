@@ -58,9 +58,9 @@ fun readBytesFromFile(pathname: String?): ByteArray {
 
 fun xorEncryptDecrypt(bytes: ByteArray, key: String) {
     val keyAsIntList = key.map { it.toByte() }
-    val len = key.length
+    val keyLength = key.length
     for (i in 0 until bytes.size) {
-        bytes[i] = bytes[i] xor keyAsIntList[i % len]
+        bytes[i] = bytes[i] xor keyAsIntList[i % keyLength]
     }
 }
 

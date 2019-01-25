@@ -42,6 +42,7 @@ var choices = [
   'enableImmersive: true',
   'autoPlay: true',
   'slideshow',
+  'XOR encrypted',
 ];
 
 class FromAsset extends StatefulWidget {
@@ -66,6 +67,8 @@ class FromAssetState extends State<FromAsset> {
 
   @override
   Widget build(BuildContext context) {
+    String prefix = _value == 10 ? "xor_" : "";
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -85,17 +88,23 @@ class FromAssetState extends State<FromAsset> {
           child: Text("loadAsset()"),
           onPressed: () {
             PdfViewer.loadAsset(
-              'assets/test.pdf',
+              'assets/${prefix}test.pdf',
               config: PdfViewerConfig(
-                nightMode: _value == 1,
-                swipeHorizontal: _value == 3 || _value == 9,
-                autoSpacing: _value == 4 || _value == 9,
-                pageFling: _value == 5 || _value == 9,
-                pageSnap: _value == 6 || _value == 9,
-                enableImmersive: _value == 7,
-                autoPlay: _value == 8,
-                videoPages: [VideoPage.fromAsset(8, "assets/buck_bunny.mp4")],
-              ),
+                  nightMode: _value == 1,
+                  swipeHorizontal: _value == 3 || _value == 9,
+                  autoSpacing: _value == 4 || _value == 9,
+                  pageFling: _value == 5 || _value == 9,
+                  pageSnap: _value == 6 || _value == 9,
+                  enableImmersive: _value == 7,
+                  autoPlay: _value == 8,
+                  videoPages: [
+                    VideoPage.fromAsset(
+                      8,
+                      "assets/${prefix}buck_bunny.mp4",
+                      xorDecryptKey: _value == 10 ? "test" : null,
+                    ),
+                  ],
+                  xorDecryptKey: _value == 10 ? "test" : null),
             );
           },
         ),
@@ -174,18 +183,19 @@ class _AnalyticsViewState extends State<AnalyticsView> {
   Widget build(BuildContext context) {
     return Container(
       child: Column(
-          children: <Widget>[
-                RaisedButton(
-                  child: Text("getAnalytics(null)"),
-                  onPressed: () async {
-                    Map records = await PdfViewer.getAnalytics(null);
-                    setState(() => _analytics = records);
-                  },
-                ),
-              ] +
-              _analytics.keys
-                  .map((page) => Text("$page - ${_analytics[page]}"))
-                  .toList()),
+        children: <Widget>[
+              RaisedButton(
+                child: Text("getAnalytics(null)"),
+                onPressed: () async {
+                  Map records = await PdfViewer.getAnalytics(null);
+                  setState(() => _analytics = records);
+                },
+              ),
+            ] +
+            _analytics.keys
+                .map((page) => Text("$page - ${_analytics[page]}"))
+                .toList(),
+      ),
     );
   }
 }

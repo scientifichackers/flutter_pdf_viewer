@@ -43,8 +43,11 @@ class PdfActivityThread(
                 "fromBytes" -> {
                     readBytesFromSocket(opts.getInt("src"), PDF_BYTES_PORT)
                 }
+                "fromAsset" -> {
+                    readBytesFromAsset(activity.applicationContext, opts.getString("src"))
+                }
                 else -> {
-                    readBytesFromAsset(activity, opts.getString("src"))
+                    throw IllegalArgumentException("Invalid method name - `$methodName`.")
                 }
             }
             xorEncryptDecrypt(bytes, it)
@@ -58,8 +61,11 @@ class PdfActivityThread(
             "fromBytes" -> {
                 pdfView.fromBytes(readBytesFromSocket(opts.getInt("src"), PDF_BYTES_PORT))
             }
-            else -> {
+            "fromAsset" -> {
                 pdfView.fromAsset(opts.getString("src"))
+            }
+            else -> {
+                throw IllegalArgumentException("Invalid method name - `$methodName`.")
             }
         }
     }
