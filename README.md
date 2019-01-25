@@ -36,11 +36,9 @@ To use this plugin, follow the [installation instructions](https://pub.dartlang.
 License: MIT
 
 #### NOTE: You must add these lines at `android/app/build.gradle`.
-
+(This is required by [ExoPlayer](https://github.com/google/ExoPlayer), which is used to play videos).
 ```
 android {
-    ...
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -59,6 +57,31 @@ $ flutter run
 ## Preview
 
 <img src="https://i.imgur.com/Uhmk09s.png" height="400" />
+
+## Generating 64-bit APKs
+
+The Underlying native library tends to blow up the APK size. So, you can build a separate APK for each CPU architecture.
+
+This will also fix an issue with flutter tooling, where 64-bit ARM devices don't work.
+
+Add the following section in `android/app/build.gradle` - 
+```
+android {
+    defaultConfig {
+        ndk {
+            abiFilters "<arch>"
+        }
+    }
+}
+```
+
+- For 32-bit APK, replace `<arch>` with `armeabi-v7a`, and run `$ flutter build apk --release` as usual.
+
+- For 64-bit APK, replace `<arch>` with `arm64-v8a`, and run `$ flutter build apk --release --target-platform=android-arm64`.
+
+Now you have 2 Apks, which you will need to publish separately to the Play Store. For that you need to tweak the `android:versionCode` property to have slightly different values for each build.
+
+The exact "Rules for multiple APKs" can be found [here](https://developer.android.com/google/play/publishing/multiple-apks).
 
 ## Thanks
 
