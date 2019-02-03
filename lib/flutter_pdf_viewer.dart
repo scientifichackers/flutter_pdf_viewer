@@ -181,14 +181,15 @@ class PdfViewer {
   /// It is a unique identifier assigned to a PDF document by the framework,
   /// based on the function arguments.
   ///
-  /// If the [pdfId] is set to `null`, the analytics are returned for the currently,
+  /// If the [pdfId] is not provided or set to [null],
+  /// the analytics are returned for the currently,
   /// or most recently opened PDF document.
   ///
   /// These will not be persisted on disk, only in-memory.
   ///
   /// The returned value is a Map of page numbers to the time [Duration] spent on that page.
   /// (Page numbers start from `1`)
-  static Future<Map<int, Duration>> getAnalytics(String pdfId) async {
+  static Future<Map<int, Duration>> getAnalytics([String pdfId]) async {
     var map = (await _platform.invokeMethod("getAnalytics", pdfId))?.map(
       (page, elapsed) => MapEntry(page, Duration(milliseconds: elapsed)),
     );
@@ -209,8 +210,10 @@ class PdfViewer {
   }
 
   /// Load Pdf from raw bytes.
-  static Future<String> loadBytes(Uint8List pdfBytes,
-      {PdfViewerConfig config}) async {
+  static Future<String> loadBytes(
+    Uint8List pdfBytes, {
+    PdfViewerConfig config,
+  }) async {
     int pdfBytesSize = pdfBytes.length;
 
     ServerSocket pdfServer =
