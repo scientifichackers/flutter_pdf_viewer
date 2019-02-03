@@ -20,8 +20,6 @@ class MyApp extends StatelessWidget {
           child: ListView(
             children: [
               FromAsset(),
-              FromUrl(),
-              FromBytes(),
               AnalyticsView(),
             ],
           ),
@@ -109,64 +107,6 @@ class FromAssetState extends State<FromAsset> {
           },
         ),
       ],
-    );
-  }
-}
-
-class FromUrl extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: RaisedButton(
-        onPressed: () async {
-          Scaffold.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Downloading...'),
-              duration: Duration(days: 24),
-            ),
-          );
-
-          String filePath = await downloadAsFile(
-            'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
-          );
-
-          Scaffold.of(context).hideCurrentSnackBar();
-          print('Downloaded - $filePath');
-
-          PdfViewer.loadFile(filePath);
-        },
-        child: Text('loadFile(downloadAsFile(cache: true))'),
-      ),
-    );
-  }
-}
-
-class FromBytes extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: RaisedButton(
-        onPressed: () async {
-          Scaffold.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Downloading...'),
-              duration: Duration(days: 24),
-            ),
-          );
-
-          Uint8List bytes = await downloadAsBytes(
-            'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
-          );
-
-          print('Downloaded as bytes');
-          Scaffold.of(context).hideCurrentSnackBar();
-
-          PdfViewer.loadBytes(bytes);
-        },
-        child: Text('loadBytes(downloadAsBytes())'),
-      ),
     );
   }
 }

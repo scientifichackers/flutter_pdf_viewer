@@ -204,9 +204,9 @@ class PdfViewer {
     String filePath, {
     PdfViewerConfig config,
   }) async {
-    String hash = _sha1('file;$filePath');
-    await _invokeMethod('fromFile', 'file://' + filePath, config, hash);
-    return hash;
+    String pdfId = _sha1('file:$filePath');
+    await _invokeMethod('fromFile', 'file://' + filePath, config, pdfId);
+    return pdfId;
   }
 
   /// Load Pdf from raw bytes.
@@ -226,9 +226,9 @@ class PdfViewer {
       },
     );
 
-    String hash = _sha1('bytes;${sha1.convert(pdfBytes.sublist(0, 64))}');
-    await _invokeMethod('fromBytes', pdfBytesSize, config, hash);
-    return hash;
+    String pdfId = _sha1('bytes:${sha1.convert(pdfBytes.sublist(0, 64))}');
+    await _invokeMethod('fromBytes', pdfBytesSize, config, pdfId);
+    return pdfId;
   }
 
   /// Load Pdf from Flutter's asset folder
@@ -236,8 +236,8 @@ class PdfViewer {
     String assetPath, {
     PdfViewerConfig config,
   }) async {
-    String hash = _sha1("asset;$assetPath");
-    await _invokeMethod('fromAsset', assetPath, config, hash);
-    return hash;
+    String pdfId = _sha1("asset:$assetPath");
+    await _invokeMethod('fromAsset', assetPath, config, pdfId);
+    return pdfId;
   }
 }
