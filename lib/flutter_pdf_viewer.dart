@@ -10,17 +10,18 @@ const int _PDF_BYTES_PORT = 4567;
 
 /// Describes a page containing a video
 ///
-/// The [pageNumber] is the page which will contain an overlay video. (Page numbers start from `1`)
+/// The [pageIndex] is the page which will contain an overlay video.
+/// (Page indices start from `0`)
 ///
 /// The various constructors can be used to describe the source of the Video file.
 class VideoPage {
-  int pageNumber;
+  int pageIndex;
   String mode;
   String xorDecryptKey;
   String src;
 
   VideoPage.fromFile(
-    this.pageNumber,
+    this.pageIndex,
     String filePath, {
     this.xorDecryptKey,
   }) {
@@ -29,7 +30,7 @@ class VideoPage {
   }
 
   VideoPage.fromAsset(
-    this.pageNumber,
+    this.pageIndex,
     String assetPath, {
     this.xorDecryptKey,
   }) {
@@ -131,7 +132,7 @@ Future<void> _invokeMethod(
 
   Map<int, Map<String, String>> videoPagesMap = {};
   config.videoPages?.forEach((videoPage) {
-    videoPagesMap[videoPage.pageNumber] = {
+    videoPagesMap[videoPage.pageIndex] = {
       'mode': videoPage.mode,
       'src': videoPage.src,
       'xorDecryptKey': videoPage.xorDecryptKey
@@ -187,8 +188,8 @@ class PdfViewer {
   ///
   /// These will not be persisted on disk, only in-memory.
   ///
-  /// The returned value is a Map of page numbers to the time [Duration] spent on that page.
-  /// (Page numbers start from `1`)
+  /// The returned value is a Map of [pageIndex] to the time [Duration] spent on that page.
+  /// (Page indices start from `0`)
   static Future<Map<int, Duration>> getAnalytics([String pdfId]) async {
     var map = (await _platform.invokeMethod("getAnalytics", pdfId))?.map(
       (page, elapsed) => MapEntry(page, Duration(milliseconds: elapsed)),

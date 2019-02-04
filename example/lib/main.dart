@@ -1,7 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_pdf_viewer/main.dart';
+import 'package:flutter_pdf_viewer/flutter_pdf_viewer.dart';
 
 void main() {
   runApp(new MyApp());

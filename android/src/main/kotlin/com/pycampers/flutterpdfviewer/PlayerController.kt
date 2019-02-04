@@ -107,10 +107,10 @@ class PlayerController(
         localBroadcastManager.sendBroadcast(
                 Intent(ANALYTICS_BROADCAST_ACTION)
                         .putExtra("name", "page")
-                        .putExtra("value", page + 1)
+                        .putExtra("value", page)
         )
 
-        val video = videoPages!![page + 1] as HashMap<*, *>?
+        val video = videoPages!![page] as HashMap<*, *>?
         if (video != null) {
             isVideoPage = true
             currentVideo = video
