@@ -94,6 +94,7 @@ class PlayerController(
     }
 
     fun stopPlayer() {
+        exoPlayer?.playWhenReady = false
         exoPlayer?.release()
         isPlaying = false
     }
@@ -114,6 +115,7 @@ class PlayerController(
         if (video != null) {
             isVideoPage = true
             currentVideo = video
+            stopPlayer()
             if (autoPlay && !wasFakeJump) {
                 playVideo(video)
             }

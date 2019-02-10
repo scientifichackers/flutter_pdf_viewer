@@ -99,6 +99,11 @@ class FromAssetState extends State<FromAsset> {
                       "assets/${prefix}buck_bunny.mp4",
                       xorDecryptKey: _value == 10 ? "test" : null,
                     ),
+                    VideoPage.fromAsset(
+                      9,
+                      "assets/${prefix}buck_bunny.mp4",
+                      xorDecryptKey: _value == 10 ? "test" : null,
+                    ),
                   ],
                   xorDecryptKey: _value == 10 ? "test" : null),
             );
