@@ -1,5 +1,6 @@
 package com.pycampers.flutterpdfviewer
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -22,16 +23,19 @@ typealias VideoPages = HashMap<Int, HashMap<String, String>>
 const val ANALYTICS_BROADCAST_ACTION = "pdf_viewer_analytics"
 
 
-class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : MethodCallHandler {
-
+class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallHandler {
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
             val channel = MethodChannel(registrar.messenger(), "flutter_pdf_viewer")
             channel.setMethodCallHandler(FlutterPdfViewerPlugin(registrar))
         }
-    }
 
+        @SuppressLint("StaticFieldLeak")
+        @JvmStatic
+        var instance: FlutterPdfViewerPlugin? = null
+    }
+    
     val context: Context = registrar.context()
     var timer = Timer()
     val broadcastManager: LocalBroadcastManager = LocalBroadcastManager.getInstance(context)
@@ -60,6 +64,7 @@ class FlutterPdfViewerPlugin private constructor(val registrar: Registrar) : Met
     }
 
     init {
+        instance = this
         broadcastManager.registerReceiver(
                 object : BroadcastReceiver() {
                     override fun onReceive(context: Context, intent: Intent) {
