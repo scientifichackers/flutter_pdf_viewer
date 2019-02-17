@@ -86,27 +86,29 @@ class FromAssetState extends State<FromAsset> {
             PdfViewer.loadAsset(
               'assets/${prefix}test.pdf',
               config: PdfViewerConfig(
-                  nightMode: _value == 1,
-                  swipeHorizontal: _value == 3 || _value == 9,
-                  autoSpacing: _value == 4 || _value == 9,
-                  pageFling: _value == 5 || _value == 9,
-                  pageSnap: _value == 6 || _value == 9,
-                  enableImmersive: _value == 7,
-                  autoPlay: _value == 8,
-                  pages: [1, 5, 9],
-                  videoPages: [
-                    VideoPage.fromAsset(
-                      8,
-                      "assets/${prefix}buck_bunny.mp4",
-                      xorDecryptKey: _value == 10 ? "test" : null,
-                    ),
-                    VideoPage.fromAsset(
-                      9,
-                      "assets/${prefix}buck_bunny.mp4",
-                      xorDecryptKey: _value == 10 ? "test" : null,
-                    ),
-                  ],
-                  xorDecryptKey: _value == 10 ? "test" : null),
+                nightMode: _value == 1,
+                swipeHorizontal: _value == 3 || _value == 9,
+                autoSpacing: _value == 4 || _value == 9,
+                pageFling: _value == 5 || _value == 9,
+                pageSnap: _value == 6 || _value == 9,
+                enableImmersive: _value == 7,
+                autoPlay: _value == 8,
+                videoPages: [
+                  VideoPage.fromAsset(
+                    8,
+                    "assets/${prefix}buck_bunny.mp4",
+                    xorDecryptKey: _value == 10 ? "test" : null,
+                  ),
+                  VideoPage.fromAsset(
+                    9,
+                    "assets/${prefix}buck_bunny.mp4",
+                    xorDecryptKey: _value == 10 ? "test" : null,
+                  ),
+                ],
+                xorDecryptKey: _value == 10 ? "test" : null,
+//                pages: [1, 5, 9],
+//                forceLandscape: true,
+              ),
             );
           },
         ),

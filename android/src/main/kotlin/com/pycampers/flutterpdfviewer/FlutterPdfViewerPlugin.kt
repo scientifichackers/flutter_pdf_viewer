@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.flutter.plugin.common.MethodCall
@@ -155,7 +156,8 @@ class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallHandler {
                 "pageFling",
                 "pageSnap",
                 "enableImmersive",
-                "autoPlay"
+                "autoPlay",
+                "forceLandscape"
         ).forEach { intent.putExtra(it, call.argument<Boolean>(it)!!) }
         listOf(
                 "password",

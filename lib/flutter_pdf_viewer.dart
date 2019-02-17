@@ -85,6 +85,7 @@ class PdfViewerConfig {
   bool autoPlay;
   List<VideoPage> videoPages;
   List<int> pages;
+  bool forceLandscape;
 
   PdfViewerConfig({
     this.password,
@@ -97,6 +98,7 @@ class PdfViewerConfig {
     this.pageSnap: false,
     this.enableImmersive: false,
     this.autoPlay: false,
+    this.forceLandscape: false,
     slideShow: false,
     this.videoPages,
     this.pages,
@@ -120,6 +122,7 @@ class PdfViewerConfig {
       enableImmersive: enableImmersive,
       videoPages: videoPages,
       pages: pages,
+      forceLandscape: forceLandscape,
     );
   }
 }
@@ -162,7 +165,8 @@ Future<void> _invokeMethod(
       'enableImmersive': config.enableImmersive,
       'autoPlay': config.autoPlay,
       'videoPages': videoPagesMap,
-      'pages': Int32List.fromList(config.pages),
+      'pages': config.pages != null ? Int32List.fromList(config.pages) : null,
+      'forceLandscape': config.forceLandscape,
       'pdfId': pdfId,
     },
   );

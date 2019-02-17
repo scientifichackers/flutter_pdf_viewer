@@ -3,6 +3,7 @@ package com.pycampers.flutterpdfviewer
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -137,6 +138,11 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         opts = intent.extras
+
+
+        if (opts.getBoolean("forceLandscape")) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        }
 
         enableImmersive = opts.getBoolean("enableImmersive")
         if (enableImmersive) {
