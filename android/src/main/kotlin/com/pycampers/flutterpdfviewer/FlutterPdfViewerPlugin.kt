@@ -35,7 +35,7 @@ class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallHandler {
         @JvmStatic
         var instance: FlutterPdfViewerPlugin? = null
     }
-    
+
     val context: Context = registrar.context()
     var timer = Timer()
     val broadcastManager: LocalBroadcastManager = LocalBroadcastManager.getInstance(context)
@@ -162,6 +162,8 @@ class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallHandler {
                 "xorDecryptKey",
                 "pdfId"
         ).forEach { intent.putExtra(it, call.argument<String>(it)) }
+
+        call.argument<IntArray>("pages")?.let { intent.putExtra("pages", it) }
 
         when (call.method) {
             "fromFile" -> {

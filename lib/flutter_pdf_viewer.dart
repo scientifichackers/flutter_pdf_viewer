@@ -62,6 +62,11 @@ class VideoPage {
 ///     This requires an API level of at least 19 (Kitkat 4.4).
 /// - [videoPages]
 ///     A list of [VideoPage] objects, to be played as an overlay on the pdf.
+/// - [pages]
+///     A list of integers that indicates which pages have to be shown.
+///     (page numbers start from 0)
+///
+///     If this is not supplied, then all pages are shown.
 /// - [autoPlay]
 ///     Whether to automatically play the video when the user arrives at the page associated with the video.
 ///     This may lead to bad UX if used without [slideShow] enabled.
@@ -79,6 +84,7 @@ class PdfViewerConfig {
   bool enableImmersive;
   bool autoPlay;
   List<VideoPage> videoPages;
+  List<int> pages;
 
   PdfViewerConfig({
     this.password,
@@ -93,6 +99,7 @@ class PdfViewerConfig {
     this.autoPlay: false,
     slideShow: false,
     this.videoPages,
+    this.pages,
   }) {
     if (slideShow) {
       swipeHorizontal = autoSpacing = pageFling = pageSnap = true;
@@ -112,6 +119,7 @@ class PdfViewerConfig {
       pageSnap: pageSnap,
       enableImmersive: enableImmersive,
       videoPages: videoPages,
+      pages: pages,
     );
   }
 }
@@ -154,6 +162,7 @@ Future<void> _invokeMethod(
       'enableImmersive': config.enableImmersive,
       'autoPlay': config.autoPlay,
       'videoPages': videoPagesMap,
+      'pages': Int32List.fromList(config.pages),
       'pdfId': pdfId,
     },
   );

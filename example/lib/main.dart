@@ -93,6 +93,7 @@ class FromAssetState extends State<FromAsset> {
                   pageSnap: _value == 6 || _value == 9,
                   enableImmersive: _value == 7,
                   autoPlay: _value == 8,
+                  pages: [1, 5, 9],
                   videoPages: [
                     VideoPage.fromAsset(
                       8,

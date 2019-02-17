@@ -87,6 +87,10 @@ class PdfActivityThread(
                 .onRender(activity)
                 .scrollHandle(scrollHandle)
 
+        if (opts.containsKey("pages")) {
+            configurator = configurator.pages(*opts.getIntArray("pages"))
+        }
+
         if (playerController.videoPages != null) {
             configurator = configurator
                     .onPageChange(playerController)
@@ -95,6 +99,23 @@ class PdfActivityThread(
 
         configurator.load()
     }
+}
+
+typealias PageTranslator = MutableMap<Int, Int>?
+
+fun buildPageTranslator(opts: Bundle): PageTranslator {
+    if (!opts.containsKey("pages")) {
+        return null
+    }
+
+    val pageTranslator: PageTranslator = mutableMapOf()
+
+    var fakePage = 0
+    for (actualPage in opts.getIntArray("pages")) {
+        pageTranslator!![fakePage++] = actualPage
+    }
+
+    return pageTranslator
 }
 
 class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
@@ -137,6 +158,7 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
         pdfId = opts.getString("pdfId")
 
         playerController = PlayerController(
+                buildPageTranslator(opts),
                 applicationContext,
                 opts.get("videoPages") as HashMap<*, *>?,
                 opts.getBoolean("autoPlay"),

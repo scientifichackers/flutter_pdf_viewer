@@ -17,6 +17,7 @@ import com.google.android.exoplayer2.ui.PlayerView
 
 
 class PlayerController(
+        val pageTranslator: PageTranslator,
         val context: Context,
         val videoPages: HashMap<*, *>?,
         val autoPlay: Boolean,
@@ -105,13 +106,18 @@ class PlayerController(
     override fun onPageChanged(page: Int, pageCount: Int) {
         isVideoPage = false
 
+        var actualPage = page
+        pageTranslator?.let {
+            actualPage = pageTranslator[page]!!
+        }
+
         localBroadcastManager.sendBroadcast(
                 Intent(ANALYTICS_BROADCAST_ACTION)
                         .putExtra("name", "page")
-                        .putExtra("value", page)
+                        .putExtra("value", actualPage)
         )
 
-        val video = videoPages!![page] as HashMap<*, *>?
+        val video = videoPages!![actualPage] as HashMap<*, *>?
         if (video != null) {
             isVideoPage = true
             currentVideo = video
