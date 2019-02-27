@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.flutter.plugin.common.MethodCall
@@ -13,9 +12,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
-import java.lang.IllegalArgumentException
 import java.util.*
-import kotlin.collections.HashMap
 
 
 typealias PageRecords = MutableMap<String, MutableMap<Int, Long>>
@@ -52,9 +49,6 @@ class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallHandler {
             }
             "activityPaused" -> {
                 activityPaused = args.getBoolean("value")
-            }
-            "pdfId" -> {
-                currentPdfId = args.getString("value")
             }
             else -> {
                 throw IllegalArgumentException(
@@ -186,7 +180,29 @@ class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallHandler {
             }
         }
 
+        val resultId = intent.hashCode()
+        intent.putExtra("resultId", resultId)
+
         registrar.activity().startActivity(intent)
-        result.success(true)
+
+        broadcastManager.registerReceiver(
+                object : BroadcastReceiver() {
+                    override fun onReceive(context: Context, intent: Intent) {
+                        val extras = intent.extras
+                        if (extras.containsKey("error")) {
+                            result.error(
+                                    extras.getString("error"),
+                                    extras.getString("message"),
+                                    null
+                            )
+                        } else {
+                            currentPdfId = extras.getString("pdfId")
+                            result.success(null)
+                        }
+                        broadcastManager.unregisterReceiver(this)
+                    }
+                },
+                IntentFilter("pdf_viewer_result_$resultId")
+        )
     }
 }

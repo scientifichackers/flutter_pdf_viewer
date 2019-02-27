@@ -14,6 +14,7 @@ import android.view.View.*
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import com.github.barteksc.pdfviewer.PDFView
+import com.github.barteksc.pdfviewer.listener.OnErrorListener
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener
 import com.github.barteksc.pdfviewer.listener.OnRenderListener
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
@@ -85,6 +86,7 @@ class PdfActivityThread(
                 .pageFling(opts.getBoolean("pageFling"))
                 .pageSnap(opts.getBoolean("pageSnap"))
                 .onLoad(activity)
+                .onError(activity)
                 .onRender(activity)
                 .scrollHandle(scrollHandle)
 
@@ -119,13 +121,14 @@ fun buildPageTranslator(opts: Bundle): PageTranslator {
     return pageTranslator
 }
 
-class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
+class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener, OnErrorListener {
 
     lateinit var progressOverlay: FrameLayout
     lateinit var pdfView: PDFView
     lateinit var closeButton: ImageButton
     lateinit var opts: Bundle
     lateinit var pdfId: String
+    var resultId: Int? = null
     lateinit var playerController: PlayerController
     lateinit var localBroadcastManager: LocalBroadcastManager
 
@@ -138,7 +141,6 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         opts = intent.extras
-
 
         if (opts.getBoolean("forceLandscape")) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -162,6 +164,7 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
         closeButton = findViewById(R.id.closeButton)
 
         pdfId = opts.getString("pdfId")
+        resultId = opts.getInt("resultId")
 
         playerController = PlayerController(
                 buildPageTranslator(opts),
@@ -221,10 +224,18 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener {
         progressOverlay.visibility = View.GONE
 
         localBroadcastManager.sendBroadcast(
-                Intent(ANALYTICS_BROADCAST_ACTION)
-                        .putExtra("name", "pdfId")
-                        .putExtra("value", pdfId)
+                Intent("pdf_viewer_result_$resultId")
+                        .putExtra("pdfId", pdfId)
         )
+    }
+
+    override fun onError(t: Throwable) {
+        localBroadcastManager.sendBroadcast(
+                Intent("pdf_viewer_result_$resultId")
+                        .putExtra("error", t.javaClass.canonicalName)
+                        .putExtra("message", t.message)
+        )
+        finish()
     }
 
     override fun onDestroy() {
