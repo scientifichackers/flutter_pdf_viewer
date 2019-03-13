@@ -39,6 +39,7 @@ var choices = [
   'autoPlay: true',
   'slideshow',
   'XOR encrypted',
+  'forceLandscape: true',
 ];
 
 class FromAsset extends StatefulWidget {
@@ -93,6 +94,7 @@ class FromAssetState extends State<FromAsset> {
                 pageSnap: _value == 6 || _value == 9,
                 enableImmersive: _value == 7,
                 autoPlay: _value == 8,
+                forceLandscape: _value == 11,
                 videoPages: [
                   VideoPage.fromAsset(
                     8,

@@ -6,13 +6,13 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.*
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.github.barteksc.pdfviewer.PDFView
 import com.github.barteksc.pdfviewer.listener.OnErrorListener
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener
@@ -20,7 +20,6 @@ import com.github.barteksc.pdfviewer.listener.OnRenderListener
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.ui.PlayerView
-
 
 const val PDF_BYTES_PORT = 4567
 
@@ -243,9 +242,14 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener, OnErro
         exoPlayer?.release()
     }
 
+    var didRenderOnce = false
+
     // stop player and save the current page to shared preferences
     override fun onStop() {
         super.onStop()
+        if (!didRenderOnce) {
+            return
+        }
         if (isPlaying) {
             exoPlayer?.playWhenReady = false
         }
@@ -260,6 +264,7 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener, OnErro
     override fun onInitiallyRendered(nbPages: Int) {
         val sharedPref = getPreferences(Context.MODE_PRIVATE) ?: return
         pdfView.jumpTo(sharedPref.getInt(pdfId, 0))
+        didRenderOnce = true
     }
 
     override fun onPause() {
