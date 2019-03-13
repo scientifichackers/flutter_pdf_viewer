@@ -125,51 +125,53 @@ class PdfViewerConfig {
       forceLandscape: forceLandscape,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    Map<int, Map<String, String>> videoPagesMap = {};
+    videoPages?.forEach((videoPage) {
+      videoPagesMap[videoPage.pageIndex] = {
+        'mode': videoPage.mode,
+        'src': videoPage.src,
+        'xorDecryptKey': videoPage.xorDecryptKey
+      };
+    });
+
+    return {
+      'password': password,
+      'xorDecryptKey': xorDecryptKey,
+      'nightMode': nightMode,
+      'enableSwipe': enableSwipe,
+      'swipeHorizontal': swipeHorizontal,
+      'autoSpacing': autoSpacing,
+      'pageFling': pageFling,
+      'pageSnap': pageSnap,
+      'enableImmersive': enableImmersive,
+      'autoPlay': autoPlay,
+      'videoPages': videoPagesMap,
+      'pages': pages != null ? Int32List.fromList(pages) : null,
+      'forceLandscape': forceLandscape,
+    };
+  }
 }
 
 MethodChannel _platform = const MethodChannel('flutter_pdf_viewer');
 
 String _sha1(str) => sha1.convert(utf8.encode(str)).toString();
 
-Future<void> _invokeMethod(
+Future<String> _invokeMethod(
   String name,
   dynamic src,
   PdfViewerConfig config,
-  String pdfId,
+  String callSignature,
 ) async {
   if (config == null) {
     config = PdfViewerConfig();
   }
-
-  Map<int, Map<String, String>> videoPagesMap = {};
-  config.videoPages?.forEach((videoPage) {
-    videoPagesMap[videoPage.pageIndex] = {
-      'mode': videoPage.mode,
-      'src': videoPage.src,
-      'xorDecryptKey': videoPage.xorDecryptKey
-    };
-  });
-
-  await _platform.invokeMethod(
-    name,
-    {
-      'src': src,
-      'password': config.password,
-      'xorDecryptKey': config.xorDecryptKey,
-      'nightMode': config.nightMode,
-      'enableSwipe': config.enableSwipe,
-      'swipeHorizontal': config.swipeHorizontal,
-      'autoSpacing': config.autoSpacing,
-      'pageFling': config.pageFling,
-      'pageSnap': config.pageSnap,
-      'enableImmersive': config.enableImmersive,
-      'autoPlay': config.autoPlay,
-      'videoPages': videoPagesMap,
-      'pages': config.pages != null ? Int32List.fromList(config.pages) : null,
-      'forceLandscape': config.forceLandscape,
-      'pdfId': pdfId,
-    },
-  );
+  var args = config.toMap();
+  var pdfId = _sha1(jsonEncode(args) + callSignature);
+  args.addAll({'src': src, 'pdfId': pdfId});
+  await _platform.invokeMethod(name, args);
+  return pdfId;
 }
 
 class PdfViewer {
@@ -178,10 +180,7 @@ class PdfViewer {
   /// The [period] is the time interval between 2 successive analytics recordings.
   /// A smaller Duration, results in more fine-grained timestamps, at the cost of resource usage.
   static Future<void> enableAnalytics(Duration period) {
-    return _platform.invokeMethod(
-      "enableAnalytics",
-      period.inMilliseconds,
-    );
+    return _platform.invokeMethod("enableAnalytics", period.inMilliseconds);
   }
 
   /// Disable recording of analytics.
@@ -218,9 +217,12 @@ class PdfViewer {
     String filePath, {
     PdfViewerConfig config,
   }) async {
-    String pdfId = _sha1('file:$filePath');
-    await _invokeMethod('fromFile', 'file://' + filePath, config, pdfId);
-    return pdfId;
+    return await _invokeMethod(
+      'fromFile',
+      'file://' + filePath,
+      config,
+      'file:$filePath',
+    );
   }
 
   /// Load Pdf from raw bytes.
@@ -230,8 +232,10 @@ class PdfViewer {
   }) async {
     int pdfBytesSize = pdfBytes.length;
 
-    ServerSocket pdfServer =
-        await ServerSocket.bind('localhost', _PDF_BYTES_PORT);
+    ServerSocket pdfServer = await ServerSocket.bind(
+      'localhost',
+      _PDF_BYTES_PORT,
+    );
     pdfServer.listen(
       (Socket client) {
         client.add(pdfBytes);
@@ -240,9 +244,12 @@ class PdfViewer {
       },
     );
 
-    String pdfId = _sha1('bytes:${sha1.convert(pdfBytes.sublist(0, 64))}');
-    await _invokeMethod('fromBytes', pdfBytesSize, config, pdfId);
-    return pdfId;
+    return await _invokeMethod(
+      'fromBytes',
+      pdfBytesSize,
+      config,
+      'bytes:${sha1.convert(pdfBytes.sublist(0, 64))}:$pdfBytesSize',
+    );
   }
 
   /// Load Pdf from Flutter's asset folder
@@ -250,8 +257,11 @@ class PdfViewer {
     String assetPath, {
     PdfViewerConfig config,
   }) async {
-    String pdfId = _sha1("asset:$assetPath");
-    await _invokeMethod('fromAsset', assetPath, config, pdfId);
-    return pdfId;
+    return await _invokeMethod(
+      'fromAsset',
+      assetPath,
+      config,
+      'asset:$assetPath',
+    );
   }
 }
