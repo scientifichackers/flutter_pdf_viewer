@@ -168,7 +168,7 @@ Future<String> _invokeMethod(
     config = PdfViewerConfig();
   }
   var args = config.toMap();
-  var pdfId = _sha1(jsonEncode(args) + callSignature);
+  var pdfId = _sha1(args.toString() + callSignature);
   args.addAll({'src': src, 'pdfId': pdfId});
   await _platform.invokeMethod(name, args);
   return pdfId;
