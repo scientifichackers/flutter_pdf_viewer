@@ -2,6 +2,8 @@
 
 A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfViewer).
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-jaaga_labs-red.svg?style=for-the-badge&link=https://www.jaaga.in/labs)](https://www.jaaga.in/labs)
+
 *P.S. Android Only!*
 
 ## Features
