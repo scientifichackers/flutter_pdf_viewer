@@ -7,6 +7,7 @@ import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
 import android.view.GestureDetector
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.*
@@ -283,5 +284,25 @@ class PdfActivity : Activity(), OnLoadCompleteListener, OnRenderListener, OnErro
                         .putExtra("value", false)
         )
         super.onResume()
+    }
+
+    fun nextPage() {
+        if (pdfView.currentPage >= pdfView.pageCount - 1) return
+        pdfView.jumpTo(pdfView.currentPage + 1)
+    }
+
+    fun prevPage() {
+        if (pdfView.currentPage <= 0) return
+        pdfView.jumpTo(pdfView.currentPage - 1)
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_UP -> prevPage()
+            KeyEvent.KEYCODE_DPAD_DOWN -> nextPage()
+            KeyEvent.KEYCODE_DPAD_LEFT -> prevPage()
+            KeyEvent.KEYCODE_DPAD_RIGHT -> nextPage()
+        }
+        return super.onKeyDown(keyCode, event)
     }
 }
