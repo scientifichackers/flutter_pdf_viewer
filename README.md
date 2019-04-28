@@ -14,7 +14,6 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 -   Scroll Bar
 -   Horizontal swipe
 -   Pinch to zoom
--   Download PDF from URL
 -   Show inline Videos in Pdf
 -   Immersive mode
 -   Page by page analytics
