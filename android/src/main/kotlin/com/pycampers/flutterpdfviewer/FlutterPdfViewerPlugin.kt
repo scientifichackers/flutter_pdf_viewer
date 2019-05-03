@@ -1,48 +1,61 @@
 package com.pycampers.flutterpdfviewer
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.os.Bundle
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.pycampers.method_call_dispatcher.MethodCallDispatcher
+import com.pycampers.method_call_dispatcher.trySend
+import com.pycampers.method_call_dispatcher.trySendError
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
-import java.util.*
-
+import java.util.HashMap
+import java.util.Timer
+import java.util.TimerTask
 
 typealias PageRecords = MutableMap<String, MutableMap<Int, Long>>
 typealias VideoPages = HashMap<Int, HashMap<String, String>>
 
 const val ANALYTICS_BROADCAST_ACTION = "pdf_viewer_analytics"
+const val PDF_VIEWER_RESULT_ = "pdf_viewer_result"
+const val TAG = "FlutterPdfViewer"
 
+val stringArgs = listOf("password", "xorDecryptKey", "pdfId")
+val booleanArgs = listOf(
+    "nightMode",
+    "enableSwipe",
+    "swipeHorizontal",
+    "autoSpacing",
+    "pageFling",
+    "pageSnap",
+    "enableImmersive",
+    "autoPlay",
+    "forceLandscape"
+)
 
-class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallHandler {
+class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallDispatcher() {
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
             val channel = MethodChannel(registrar.messenger(), "flutter_pdf_viewer")
             channel.setMethodCallHandler(FlutterPdfViewerPlugin(registrar))
         }
-
-        @SuppressLint("StaticFieldLeak")
-        @JvmStatic
-        var instance: FlutterPdfViewerPlugin? = null
     }
 
     val context: Context = registrar.context()
     var timer = Timer()
-    val broadcastManager: LocalBroadcastManager = LocalBroadcastManager.getInstance(context)
+    val broadcaster: LocalBroadcastManager = LocalBroadcastManager.getInstance(context)
     var activityPaused = false
     var currentPdfId: String? = null
     var currentPage: Int? = null
     var pageRecords: PageRecords = mutableMapOf()
 
-    fun handleBroadcast(args: Bundle) {
+    fun handleAnalyticsBroadcast(args: Bundle) {
         when (args.getString("name")) {
             "page" -> {
                 currentPage = args.getInt("value")
@@ -52,37 +65,34 @@ class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallHandler {
             }
             else -> {
                 throw IllegalArgumentException(
-                        "Invalid method name - `${args.getString("name")}`"
+                    "Invalid method name - `${args.getString("name")}`"
                 )
             }
         }
     }
 
     init {
-        instance = this
-        broadcastManager.registerReceiver(
-                object : BroadcastReceiver() {
-                    override fun onReceive(context: Context, intent: Intent) {
-                        handleBroadcast(intent.extras)
-                    }
-                },
-                IntentFilter(ANALYTICS_BROADCAST_ACTION)
+        broadcaster.registerReceiver(
+            object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    handleAnalyticsBroadcast(intent.extras!!)
+                }
+            },
+            IntentFilter(ANALYTICS_BROADCAST_ACTION)
         )
     }
 
-    fun removeTimer() {
+    fun stopAnalyticsTimer() {
         timer.cancel()
         timer.purge()
     }
 
-    fun scheduleTimer(period: Int) {
+    fun startAnalyticsTimer(period: Int) {
         val periodAsLong = period.toLong()
 
         val timerTask = object : TimerTask() {
             override fun run() {
-                if (activityPaused) {
-                    return
-                }
+                if (activityPaused) return
 
                 currentPdfId?.let { pdfId ->
                     currentPage?.let { page ->
@@ -102,107 +112,81 @@ class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallHandler {
         timer.scheduleAtFixedRate(timerTask, 0, periodAsLong)
     }
 
-    fun tryAnalyticsMethods(call: MethodCall, result: Result): Boolean {
-        when (call.method) {
-            "disableAnalytics" -> {
-                removeTimer()
-                result.success(true)
-            }
-            "enableAnalytics" -> {
-                removeTimer()
-                scheduleTimer(call.arguments as Int)
-                result.success(true)
-            }
-            "getAnalytics" -> {
-                result.success(
-                        pageRecords[call.arguments as String? ?: currentPdfId]
-                )
-            }
-            else -> {
-                return false
-            }
-        }
-        return true
+    fun disableAnalytics(call: MethodCall, result: Result) {
+        trySend(result) { stopAnalyticsTimer() }
     }
 
-    override fun onMethodCall(call: MethodCall, result: Result) {
-        if (tryAnalyticsMethods(call, result)) {
-            return
+    fun enableAnalytics(call: MethodCall, result: Result) {
+        trySend(result) {
+            stopAnalyticsTimer()
+            startAnalyticsTimer(call.arguments as Int)
         }
+    }
 
+    fun getAnalytics(call: MethodCall, result: Result) {
+        trySend(result) {
+            val pdfId = call.arguments as String? ?: currentPdfId
+            mapOf(pdfId to pageRecords[pdfId])
+        }
+    }
+
+    fun getAllAnalytics(call: MethodCall, result: Result) {
+        trySend(result) { pageRecords }
+    }
+
+    fun launchPdfActivity(call: MethodCall, result: Result) {
         val intent = Intent(context, PdfActivity::class.java)
-        intent.putExtra("name", call.method)
-
-        val videoPages = call.argument<VideoPages>("videoPages")
-                ?.mapValues {
-                    if (it.value["mode"] == "fromAsset") {
-                        it.value["src"] = registrar.lookupKeyForAsset(it.value["src"])
-                    }
-                    it.value
-                }
-        intent.putExtra("videoPages", videoPages as HashMap)
-
-        listOf(
-                "nightMode",
-                "enableSwipe",
-                "swipeHorizontal",
-                "autoSpacing",
-                "pageFling",
-                "pageSnap",
-                "enableImmersive",
-                "autoPlay",
-                "forceLandscape"
-        ).forEach { intent.putExtra(it, call.argument<Boolean>(it)!!) }
-        listOf(
-                "password",
-                "xorDecryptKey",
-                "pdfId"
-        ).forEach { intent.putExtra(it, call.argument<String>(it)) }
-
-        call.argument<IntArray>("pages")?.let { intent.putExtra("pages", it) }
-
-        when (call.method) {
-            "fromFile" -> {
-                intent.putExtra("src", call.argument<String>("src")!!)
-            }
-            "fromBytes" -> {
-                intent.putExtra("src", call.argument<Int>("src")!!)
-            }
-            "fromAsset" -> {
-                intent.putExtra(
-                        "src",
-                        registrar.lookupKeyForAsset(call.argument<String>("src")!!)
-                )
-            }
-            else -> {
-                result.notImplemented()
-                return
-            }
-        }
 
         val resultId = intent.hashCode()
         intent.putExtra("resultId", resultId)
+        call.argument<IntArray>("pages")?.let { intent.putExtra("pages", it) }
+        stringArgs.forEach { intent.putExtra(it, call.argument<String>(it)) }
+        booleanArgs.forEach { intent.putExtra(it, call.argument<Boolean>(it)!!) }
+
+        val mode = call.argument<String>("mode")!!
+        intent.putExtra("mode", mode)
+
+        var src = call.argument<String>("src")!!
+        src = when (mode) {
+            "fromFile" -> Uri.parse(src).path!!
+            "fromAsset" -> registrar.lookupKeyForAsset(src)
+            "fromBytes" -> src
+            else -> throw IllegalArgumentException("invalid mode: $mode.")
+        }
+        intent.putExtra("src", src)
+
+        val videoPages = call.argument<VideoPages>("videoPages") ?: hashMapOf()
+        videoPages.forEach {
+            val vsrc = it.value["src"]!!
+            it.value["src"] = when (it.value["mode"]) {
+                "fromFile" -> Uri.parse(vsrc).path!!
+                "fromAsset" -> registrar.lookupKeyForAsset(vsrc)
+                else -> throw IllegalArgumentException("invalid mode: $mode.")
+            }
+        }
+        intent.putExtra("videoPages", videoPages)
+
+        broadcaster.registerReceiver(
+            object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    val extras = intent.extras!!
+                    if (extras.containsKey("error")) {
+                        trySendError(
+                            result,
+                            extras.getString("error"),
+                            extras.getString("message"),
+                            extras.getString("stacktrace")
+                        )
+                    } else {
+                        currentPdfId = extras.getString("pdfId")
+                        trySend(result)
+                    }
+                    broadcaster.unregisterReceiver(this)
+                }
+            },
+            IntentFilter("$PDF_VIEWER_RESULT_$resultId")
+        )
 
         registrar.activity().startActivity(intent)
-
-        broadcastManager.registerReceiver(
-                object : BroadcastReceiver() {
-                    override fun onReceive(context: Context, intent: Intent) {
-                        val extras = intent.extras
-                        if (extras.containsKey("error")) {
-                            result.error(
-                                    extras.getString("error"),
-                                    extras.getString("message"),
-                                    null
-                            )
-                        } else {
-                            currentPdfId = extras.getString("pdfId")
-                            result.success(null)
-                        }
-                        broadcastManager.unregisterReceiver(this)
-                    }
-                },
-                IntentFilter("pdf_viewer_result_$resultId")
-        )
     }
 }

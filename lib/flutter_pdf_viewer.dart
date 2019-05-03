@@ -6,7 +6,9 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 
-const int _PDF_BYTES_PORT = 4567;
+MethodChannel _platform = const MethodChannel('flutter_pdf_viewer');
+
+String _sha1(str) => sha1.convert(utf8.encode(str)).toString();
 
 /// Describes a page containing a video
 ///
@@ -71,7 +73,9 @@ class VideoPage {
 ///     Whether to automatically play the video when the user arrives at the page associated with the video.
 ///     This may lead to bad UX if used without [slideShow] enabled.
 /// - [slideShow]
-///     Emulate a slideshow like view, by enabling [swipeHorizontal], [autoSpacing], [pageFling] & [pageSnap].
+///     Simulate a slideshow-like view, by enabling [swipeHorizontal], [autoSpacing], [pageFling] & [pageSnap].
+/// - [pdfId]
+///     Use this PDF identifier for recording analytics, instead of the automatically generated one.
 class PdfViewerConfig {
   String password;
   String xorDecryptKey;
@@ -86,6 +90,7 @@ class PdfViewerConfig {
   List<VideoPage> videoPages;
   List<int> pages;
   bool forceLandscape;
+  String pdfId;
 
   PdfViewerConfig({
     this.password,
@@ -102,6 +107,7 @@ class PdfViewerConfig {
     slideShow: false,
     this.videoPages,
     this.pages,
+    this.pdfId,
   }) {
     if (slideShow) {
       swipeHorizontal = autoSpacing = pageFling = pageSnap = true;
@@ -154,24 +160,25 @@ class PdfViewerConfig {
   }
 }
 
-MethodChannel _platform = const MethodChannel('flutter_pdf_viewer');
-
-String _sha1(str) => sha1.convert(utf8.encode(str)).toString();
-
-Future<String> _invokeMethod(
-  String name,
-  dynamic src,
+Future<String> _launchPdfActivity(
+  String mode,
+  String src,
   PdfViewerConfig config,
   String callSignature,
 ) async {
-  if (config == null) {
-    config = PdfViewerConfig();
-  }
-  var args = config.toMap();
-  var pdfId = _sha1(args.toString() + callSignature);
-  args.addAll({'src': src, 'pdfId': pdfId});
-  await _platform.invokeMethod(name, args);
+  final args = (config ?? PdfViewerConfig()).toMap();
+  final pdfId = config?.pdfId ?? _sha1("$callSignature:$args");
+  args.addAll({'mode': mode, 'src': src, 'pdfId': pdfId});
+  await _platform.invokeMethod("launchPdfActivity", args);
   return pdfId;
+}
+
+Map<int, Duration> _serializeAnalyticsEntries(entries) {
+  return Map<int, Duration>.from(
+    entries.map((page, elapsed) {
+      return MapEntry(page, Duration(milliseconds: elapsed));
+    }),
+  );
 }
 
 class PdfViewer {
@@ -191,23 +198,47 @@ class PdfViewer {
   /// Returns the stored analytics.
   ///
   /// [pdfId] is a [String] returned by all the `PdfViewer.load*()` methods.
-  /// It is a unique identifier assigned to a PDF document by the framework,
-  /// based on the function arguments.
+  /// It is a unique identifier assigned to a PDF document by the library,
+  /// based on the function arguments etc.
   ///
-  /// If the [pdfId] is not provided or set to [null],
+  /// If the [pdfId] is not provided or set to `null`,
   /// the analytics are returned for the currently,
   /// or most recently opened PDF document.
   ///
-  /// These will not be persisted on disk, only in-memory.
+  /// If [all] is set to `true`, then [pdfId] is ignored,
+  /// and analytics for all PDFs are returned.
   ///
-  /// The returned value is a Map of [pageIndex] to the time [Duration] spent on that page.
+  /// These are not be persisted on disk, only in-memory.
+  ///
+  ///
+  /// The returned value is a mapping from [pdfId] to a mapping,
+  /// from `pageIndex` to the time [Duration] spent on that page.
   /// (Page indices start from `0`)
-  static Future<Map<int, Duration>> getAnalytics([String pdfId]) async {
-    var map = (await _platform.invokeMethod("getAnalytics", pdfId))?.map(
-      (page, elapsed) => MapEntry(page, Duration(milliseconds: elapsed)),
+  ///
+  /// ```
+  /// {
+  ///   pdfId: {
+  ///     pageIndex: Duration
+  ///   }
+  /// }
+  /// ```
+  static Future<Map<String, Map<int, Duration>>> getAnalytics({
+    String pdfId,
+    bool all: false,
+  }) async {
+    var result;
+    if (all) {
+      result = await _platform.invokeMethod("getAllAnalytics");
+    } else {
+      result = await _platform.invokeMethod("getAnalytics", pdfId);
+    }
+    if (result == null) return {};
+
+    return Map<String, Map<int, Duration>>.from(
+      result.map((pdfId, entries) {
+        return MapEntry(pdfId, _serializeAnalyticsEntries(entries));
+      }),
     );
-    if (map == null) map = {};
-    return Map<int, Duration>.from(map);
   }
 
   /// Load Pdf from [filePath].
@@ -217,7 +248,7 @@ class PdfViewer {
     String filePath, {
     PdfViewerConfig config,
   }) async {
-    return await _invokeMethod(
+    return await _launchPdfActivity(
       'fromFile',
       'file://' + filePath,
       config,
@@ -230,25 +261,20 @@ class PdfViewer {
     Uint8List pdfBytes, {
     PdfViewerConfig config,
   }) async {
-    int pdfBytesSize = pdfBytes.length;
+    final size = pdfBytes.length;
 
-    ServerSocket pdfServer = await ServerSocket.bind(
-      'localhost',
-      _PDF_BYTES_PORT,
-    );
-    pdfServer.listen(
-      (Socket client) {
-        client.add(pdfBytes);
-        client.close();
-        pdfServer.close();
-      },
-    );
+    final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    server.listen((client) {
+      client.add(pdfBytes);
+      client.close();
+      server.close();
+    });
 
-    return await _invokeMethod(
+    return await _launchPdfActivity(
       'fromBytes',
-      pdfBytesSize,
+      "${server.address.address},${server.port},$size",
       config,
-      'bytes:${sha1.convert(pdfBytes.sublist(0, 64))}:$pdfBytesSize',
+      'bytes:${sha1.convert(pdfBytes.sublist(0, 64))}:$size',
     );
   }
 
@@ -257,7 +283,7 @@ class PdfViewer {
     String assetPath, {
     PdfViewerConfig config,
   }) async {
-    return await _invokeMethod(
+    return await _launchPdfActivity(
       'fromAsset',
       assetPath,
       config,

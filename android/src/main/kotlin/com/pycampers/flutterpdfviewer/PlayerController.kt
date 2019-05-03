@@ -2,11 +2,11 @@ package com.pycampers.flutterpdfviewer
 
 import android.content.Context
 import android.content.Intent
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageButton
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.github.barteksc.pdfviewer.PDFView
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener
 import com.github.barteksc.pdfviewer.listener.OnTapListener
@@ -14,25 +14,26 @@ import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.ExoPlayerFactory
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.ui.PlayerView
-
+import java.util.HashMap
 
 class PlayerController(
-        val pageTranslator: PageTranslator,
-        val context: Context,
-        val videoPages: HashMap<*, *>?,
-        val autoPlay: Boolean,
-        val pdfView: PDFView,
-        val playerView: PlayerView,
-        val closeButton: ImageButton
+    val pageTranslator: PageTranslator,
+    val context: Context,
+    val videoPages: VideoPages,
+    val autoPlay: Boolean,
+    val pdfView: PDFView,
+    val playerView: PlayerView,
+    val closeButton: ImageButton
 ) : OnPageChangeListener, OnTapListener {
-
     var exoPlayer: ExoPlayer? = null
     var isPlaying = false
-
     var wasFakeJump = false
     var lastVideoPage: Int? = null
+    var isVideoPage = false
+    var currentVideo: HashMap<String, String>? = null
 
-    val localBroadcastManager: LocalBroadcastManager = LocalBroadcastManager.getInstance(context)
+    val broadcaster: LocalBroadcastManager
+        get() = LocalBroadcastManager.getInstance(context)
 
     init {
         //
@@ -100,9 +101,6 @@ class PlayerController(
         isPlaying = false
     }
 
-    var isVideoPage = false
-    var currentVideo: HashMap<*, *>? = null
-
     override fun onPageChanged(page: Int, pageCount: Int) {
         isVideoPage = false
 
@@ -111,13 +109,13 @@ class PlayerController(
             actualPage = pageTranslator[page]!!
         }
 
-        localBroadcastManager.sendBroadcast(
-                Intent(ANALYTICS_BROADCAST_ACTION)
-                        .putExtra("name", "page")
-                        .putExtra("value", actualPage)
+        broadcaster.sendBroadcast(
+            Intent(ANALYTICS_BROADCAST_ACTION)
+                .putExtra("name", "page")
+                .putExtra("value", actualPage)
         )
 
-        val video = videoPages!![actualPage] as HashMap<*, *>?
+        val video = videoPages[actualPage]
         if (video != null) {
             isVideoPage = true
             currentVideo = video

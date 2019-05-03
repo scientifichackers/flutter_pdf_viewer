@@ -2,7 +2,7 @@ group 'com.pycampers.flutterpdfviewer'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.3.20'
+    ext.kotlin_version = '1.3.31'
     repositories {
         google()
         jcenter()
@@ -31,7 +31,7 @@ android {
         main.java.srcDirs += 'src/main/kotlin'
     }
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 19
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     lintOptions {
@@ -45,4 +45,5 @@ dependencies {
     implementation 'com.google.android.exoplayer:exoplayer:2.9.3'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
+    implementation project(path: ':method_call_dispatcher')
 }
