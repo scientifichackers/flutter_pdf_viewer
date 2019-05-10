@@ -1,10 +1,8 @@
+[![Sponsor](https://img.shields.io/badge/Sponsor-jaaga_labs-red.svg?style=for-the-badge)](https://www.jaaga.in/labs) [![pub package](https://img.shields.io/pub/v/flutter_pdf_viewer.svg?style=for-the-badge)](https://pub.dartlang.org/packages/flutter_pdf_viewer)
+
 # flutter pdf viewer
 
 A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfViewer).
-
-[![Sponsor](https://img.shields.io/badge/Sponsor-jaaga_labs-red.svg?style=for-the-badge)](https://www.jaaga.in/labs)
-
-[![pub package](https://img.shields.io/pub/v/flutter_pdf_viewer.svg?style=for-the-badge)](https://pub.dartlang.org/packages/flutter_pdf_viewer)
 
 *P.S. Android Only!*
 
