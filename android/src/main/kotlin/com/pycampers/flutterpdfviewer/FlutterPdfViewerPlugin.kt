@@ -135,6 +135,8 @@ class FlutterPdfViewerMethods(val registrar: Registrar) {
         stringArgs.forEach { intent.putExtra(it, call.argument<String>(it)) }
         booleanArgs.forEach { intent.putExtra(it, call.argument<Boolean>(it)!!) }
 
+        intent.putExtra("initialPage", call.argument<Int>("initialPage"))
+
         val mode = call.argument<String>("mode")!!
         intent.putExtra("mode", mode)
 

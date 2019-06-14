@@ -101,6 +101,7 @@ class PdfLoaderSectionState extends State<PdfLoaderSection> {
       slideShow: option == 9,
       videoPages: videoPages,
       xorDecryptKey: key,
+      initialPage: null,
       atExit: (pageIndex) {
         print(">> atExit($pageIndex)");
       },

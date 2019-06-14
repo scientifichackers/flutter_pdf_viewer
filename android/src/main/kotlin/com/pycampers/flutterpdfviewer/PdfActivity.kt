@@ -150,7 +150,7 @@ class PdfActivity : Activity(), OnRenderListener, OnErrorListener {
             pdfView!!,
             playerController!!,
             DefaultScrollHandle(this),
-            getSavedPage()
+            opts.getInt("initialPage", getSavedPage())
         )
         thread.setUncaughtExceptionHandler { _, e -> onError(e) }
         thread.start()

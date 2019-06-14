@@ -7,7 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:plugin_scaffold/plugin_scaffold.dart';
 
-typedef AnalyticsCallback(String pdfId, int pageIndex, bool activityPaused);
+typedef AnalyticsCallback(String pdfId, int pageIndex, bool paused);
 typedef AtExit(int pageIndex);
 
 /// Describes a page containing a video
@@ -62,6 +62,10 @@ class VideoPage {
 /// - [enableImmersive]
 ///     Enables immersive mode, that hides the system UI.
 ///     This requires an API level of at least 19 (Kitkat 4.4).
+/// - [initialPage]
+///     The initial page to open when the PDF launches.
+///
+///     By default it opens the last recently opened page.
 /// - [videoPages]
 ///     A list of [VideoPage] objects, to be played as an overlay on the pdf.
 /// - [pages]
@@ -76,6 +80,8 @@ class VideoPage {
 ///     Simulate a slideshow-like view, by enabling [swipeHorizontal], [autoSpacing], [pageFling] & [pageSnap].
 /// - [pdfId]
 ///     Use this PDF identifier for recording analytics, instead of the automatically generated one.
+/// - [atExit]
+///     Called when PDF is closed.
 class PdfViewerConfig {
   String password;
   String xorDecryptKey;
@@ -87,11 +93,11 @@ class PdfViewerConfig {
   bool pageSnap;
   bool enableImmersive;
   bool autoPlay;
+  int initialPage;
   List<VideoPage> videoPages;
   List<int> pages;
   bool forceLandscape;
   String pdfId;
-
   AtExit atExit;
 
   PdfViewerConfig({
@@ -107,6 +113,7 @@ class PdfViewerConfig {
     this.autoPlay: false,
     this.forceLandscape: false,
     slideShow: false,
+    this.initialPage,
     this.videoPages,
     this.pages,
     this.pdfId,
@@ -129,6 +136,7 @@ class PdfViewerConfig {
       pageFling: pageFling,
       pageSnap: pageSnap,
       enableImmersive: enableImmersive,
+      initialPage: initialPage,
       videoPages: videoPages,
       pages: pages,
       forceLandscape: forceLandscape,
@@ -156,6 +164,7 @@ class PdfViewerConfig {
       'pageSnap': pageSnap,
       'enableImmersive': enableImmersive,
       'autoPlay': autoPlay,
+      'initialPage': initialPage,
       'videoPages': videoPagesMap,
       'pages': pages != null ? Int32List.fromList(pages) : null,
       'forceLandscape': forceLandscape,
@@ -165,7 +174,11 @@ class PdfViewerConfig {
 
 class PdfViewer {
   static const channel = MethodChannel('com.pycampers.flutter_pdf_viewer');
-  static Timer _analyticsTimer;
+  static Timer analyticsTimer;
+
+  /// A callback that notifies changes in the pdf activity.
+  ///
+  /// The [enableAnalytics] method must be called to enable these callbacks.
   static AnalyticsCallback analyticsCallback;
 
   /// Holds the stored analytics.
@@ -205,7 +218,7 @@ class PdfViewer {
     int pageIndex;
 
     if (period != null) {
-      _analyticsTimer = Timer.periodic(period, (_) {
+      analyticsTimer = Timer.periodic(period, (_) {
         if (paused) return;
         analyticsEntries[pdfId] ??= {};
         analyticsEntries[pdfId][pageIndex] ??= Duration();
@@ -225,12 +238,13 @@ class PdfViewer {
   static Future<void> disableAnalytics() async {
     await channel.invokeMethod("disableAnalytics");
 
-    _analyticsTimer?.cancel();
-    _analyticsTimer = null;
+    analyticsTimer?.cancel();
+    analyticsTimer = null;
 
     PluginScaffold.removeCallHandlersWithName(channel, "analyticsCallback");
   }
 
+  /// Jump to the specified [pageIndex] of the currently opened PDF.
   static Future<void> jumpToPage(int pageIndex) async {
     await channel.invokeMethod("jumpToPage", pageIndex);
   }

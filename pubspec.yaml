@@ -1,6 +1,6 @@
 name: flutter_pdf_viewer
 description: A native Pdf viewer for flutter based on Pdfium Android
-version: 0.5.0
+version: 0.6.0
 author: Dev Aggarwal <devpxy@gmail.com>
 homepage: https://github.com/pycampers/flutter_pdf_viewer
 
