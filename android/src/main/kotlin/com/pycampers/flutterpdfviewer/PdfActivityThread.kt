@@ -13,7 +13,8 @@ class PdfActivityThread(
     val opts: Bundle,
     val pdfView: PDFView,
     val playerController: PlayerController,
-    val scrollHandle: DefaultScrollHandle
+    val scrollHandle: DefaultScrollHandle,
+    val initialPage: Int
 ) : Thread() {
     val mode = opts.getString("mode")!!
     val xorDecryptKey: String? = opts.getString("xorDecryptKey")
@@ -70,19 +71,15 @@ class PdfActivityThread(
             .autoSpacing(opts.getBoolean("autoSpacing"))
             .pageFling(opts.getBoolean("pageFling"))
             .pageSnap(opts.getBoolean("pageSnap"))
-            .onLoad(activity)
             .onError(activity)
             .onRender(activity)
             .scrollHandle(scrollHandle)
+            .onPageChange(playerController)
+            .onTap(playerController)
+            .defaultPage(initialPage)
 
         if (opts.containsKey("pages")) {
             configurator = configurator.pages(*opts.getIntArray("pages"))
-        }
-
-        if (playerController.videoPages != null) {
-            configurator = configurator
-                .onPageChange(playerController)
-                .onTap(playerController)
         }
 
         configurator.load()

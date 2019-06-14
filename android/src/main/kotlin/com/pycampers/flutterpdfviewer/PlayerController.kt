@@ -17,6 +17,7 @@ import com.google.android.exoplayer2.ui.PlayerView
 import java.util.HashMap
 
 class PlayerController(
+val pdfId: String,
     val pageTranslator: PageTranslator,
     val context: Context,
     val videoPages: VideoPages,
@@ -110,9 +111,11 @@ class PlayerController(
         }
 
         broadcaster.sendBroadcast(
-            Intent(ANALYTICS_BROADCAST_ACTION)
-                .putExtra("name", "page")
-                .putExtra("value", actualPage)
+            Intent(ANALYTICS_BROADCAST_ACTION).run {
+                putExtra("name", "onPageChanged")
+                putExtra("pdfId", pdfId)
+                putExtra("pageIndex", actualPage)
+            }
         )
 
         val video = videoPages[actualPage]

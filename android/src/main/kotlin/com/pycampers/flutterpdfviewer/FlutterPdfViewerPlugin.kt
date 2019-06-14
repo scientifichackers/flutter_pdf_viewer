@@ -7,22 +7,19 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.pycampers.method_call_dispatcher.MethodCallDispatcher
-import com.pycampers.method_call_dispatcher.trySend
-import com.pycampers.method_call_dispatcher.trySendError
+import com.pycampers.plugin_scaffold.createPluginScaffold
+import com.pycampers.plugin_scaffold.trySend
+import com.pycampers.plugin_scaffold.trySendError
 import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.util.HashMap
-import java.util.Timer
-import java.util.TimerTask
 
-typealias PageRecords = MutableMap<String, MutableMap<Int, Long>>
 typealias VideoPages = HashMap<Int, HashMap<String, String>>
 
 const val ANALYTICS_BROADCAST_ACTION = "pdf_viewer_analytics"
-const val PDF_VIEWER_RESULT_ = "pdf_viewer_result"
+const val PDF_VIEWER_RESULT_ACTION = "pdf_viewer_result"
+const val PDF_VIEWER_JUMP_ACTION = "pdf_viewer_jump"
 const val TAG = "FlutterPdfViewer"
 
 val stringArgs = listOf("password", "xorDecryptKey", "pdfId")
@@ -38,30 +35,57 @@ val booleanArgs = listOf(
     "forceLandscape"
 )
 
-class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallDispatcher() {
+class FlutterPdfViewerPlugin {
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
-            val channel = MethodChannel(registrar.messenger(), "flutter_pdf_viewer")
-            channel.setMethodCallHandler(FlutterPdfViewerPlugin(registrar))
+            val methods = FlutterPdfViewerMethods(registrar)
+            val channel = createPluginScaffold(
+                registrar.messenger(),
+                "com.pycampers.flutter_pdf_viewer",
+                methods
+            )
+            methods.analyticsCallback = { pdfId, pageIndex, activityPaused ->
+                channel.invokeMethod("analyticsCallback", listOf(pdfId, pageIndex, activityPaused))
+            }
+            methods.atExit = { pdfId, pageIndex ->
+                println("atExit!")
+                channel.invokeMethod("atExit$pdfId", pageIndex)
+            }
         }
     }
+}
 
+class FlutterPdfViewerMethods(val registrar: Registrar) {
     val context: Context = registrar.context()
-    var timer = Timer()
     val broadcaster: LocalBroadcastManager = LocalBroadcastManager.getInstance(context)
+
+    var analyticsCallback: ((String, Int, Boolean) -> Unit)? = null
+    var atExit: ((String, Int) -> Unit)? = null
+
+    var enabledAnalytics = false
     var activityPaused = false
-    var currentPdfId: String? = null
-    var currentPage: Int? = null
-    var pageRecords: PageRecords = mutableMapOf()
+    var pageIndex = 0
+
+    fun invokeAnalyticsCallback(args: Bundle) {
+        if (!enabledAnalytics) return
+        analyticsCallback?.invoke(args.getString("pdfId")!!, pageIndex, activityPaused)
+    }
 
     fun handleAnalyticsBroadcast(args: Bundle) {
         when (args.getString("name")) {
-            "page" -> {
-                currentPage = args.getInt("value")
+            "onDestroy" -> {
+                atExit?.invoke(args.getString("pdfId")!!, pageIndex)
+                return
             }
-            "activityPaused" -> {
-                activityPaused = args.getBoolean("value")
+            "onPageChanged" -> {
+                pageIndex = args.getInt("pageIndex")
+            }
+            "onPause" -> {
+                activityPaused = true
+            }
+            "onResume" -> {
+                activityPaused = false
             }
             else -> {
                 throw IllegalArgumentException(
@@ -69,6 +93,7 @@ class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallDispatcher() 
                 )
             }
         }
+        invokeAnalyticsCallback(args)
     }
 
     init {
@@ -82,62 +107,29 @@ class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallDispatcher() 
         )
     }
 
-    fun stopAnalyticsTimer() {
-        timer.cancel()
-        timer.purge()
-    }
-
-    fun startAnalyticsTimer(period: Int) {
-        val periodAsLong = period.toLong()
-
-        val timerTask = object : TimerTask() {
-            override fun run() {
-                if (activityPaused) return
-
-                currentPdfId?.let { pdfId ->
-                    currentPage?.let { page ->
-                        if (pageRecords[pdfId] == null) {
-                            pageRecords[pdfId] = mutableMapOf()
-                        }
-                        pageRecords[pdfId]!!.let {
-                            val stored = it[page]
-                            it[page] = if (stored != null) stored + periodAsLong else 0
-                        }
-                    }
-                }
-            }
-        }
-
-        timer = Timer()
-        timer.scheduleAtFixedRate(timerTask, 0, periodAsLong)
-    }
-
     fun disableAnalytics(call: MethodCall, result: Result) {
-        trySend(result) { stopAnalyticsTimer() }
+        enabledAnalytics = false
+        result.success(null)
     }
 
     fun enableAnalytics(call: MethodCall, result: Result) {
-        trySend(result) {
-            stopAnalyticsTimer()
-            startAnalyticsTimer(call.arguments as Int)
-        }
+        enabledAnalytics = true
+        result.success(null)
     }
 
-    fun getAnalytics(call: MethodCall, result: Result) {
-        trySend(result) {
-            val pdfId = call.arguments as String? ?: currentPdfId
-            mapOf(pdfId to pageRecords[pdfId])
-        }
-    }
-
-    fun getAllAnalytics(call: MethodCall, result: Result) {
-        trySend(result) { pageRecords }
+    fun jumpToPage(call: MethodCall, result: Result) {
+        broadcaster.sendBroadcast(
+            Intent(PDF_VIEWER_JUMP_ACTION).run {
+                putExtra("pageIndex", call.arguments as Int)
+            }
+        )
+        result.success(null)
     }
 
     fun launchPdfActivity(call: MethodCall, result: Result) {
         val intent = Intent(context, PdfActivity::class.java)
-
         val resultId = intent.hashCode()
+
         intent.putExtra("resultId", resultId)
         call.argument<IntArray>("pages")?.let { intent.putExtra("pages", it) }
         stringArgs.forEach { intent.putExtra(it, call.argument<String>(it)) }
@@ -169,22 +161,21 @@ class FlutterPdfViewerPlugin(val registrar: Registrar) : MethodCallDispatcher() 
         broadcaster.registerReceiver(
             object : BroadcastReceiver() {
                 override fun onReceive(context: Context, intent: Intent) {
-                    val extras = intent.extras!!
-                    if (extras.containsKey("error")) {
+                    val args = intent.extras!!
+                    if (args.containsKey("error")) {
                         trySendError(
                             result,
-                            extras.getString("error"),
-                            extras.getString("message"),
-                            extras.getString("stacktrace")
+                            args.getString("error"),
+                            args.getString("message"),
+                            args.getString("stacktrace")
                         )
                     } else {
-                        currentPdfId = extras.getString("pdfId")
                         trySend(result)
                     }
                     broadcaster.unregisterReceiver(this)
                 }
             },
-            IntentFilter("$PDF_VIEWER_RESULT_$resultId")
+            IntentFilter("$PDF_VIEWER_RESULT_ACTION$resultId")
         )
 
         registrar.activity().startActivity(intent)
