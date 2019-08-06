@@ -20,7 +20,7 @@ A native Pdf viewer for flutter, built on [AndroidPdfViewer](https://github.com/
 
 -   Features _fast_ native speed XOR - decryption of files.
 -   Password protected pdf.
--   Download and display PDF from URL without ever touching the disk!
+-   Display PDF from bytes without ever touching the disk!
 
 ## Drawbacks
 
