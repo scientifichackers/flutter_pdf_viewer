@@ -1,6 +1,6 @@
 name: flutter_pdf_viewer
 description: A native Pdf viewer for flutter based on Pdfium Android
-version: 0.6.0
+version: 0.6.1
 author: Dev Aggarwal <devpxy@gmail.com>
 homepage: https://github.com/pycampers/flutter_pdf_viewer
 
@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
 
   crypto: ^2.0.6
-  plugin_scaffold: ^1.1.0
+  plugin_scaffold: ^1.1.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec

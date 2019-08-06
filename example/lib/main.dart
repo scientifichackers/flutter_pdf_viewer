@@ -200,10 +200,10 @@ class _AnalyticsSectionState extends State<AnalyticsSection> {
   }
 }
 
-void main() {
-  PdfViewer.enableAnalytics(Duration(milliseconds: 500));
+void main() async {
+  await PdfViewer.enableAnalytics(Duration(milliseconds: 500));
   PdfViewer.analyticsCallback = (pdfId, pageIndex, paused) {
-//    print("))) $pdfId, $pageIndex, $paused");
+    print("analyticsCallback: { pdfId: $pdfId, pageIndex: $pageIndex, paused: $paused }");
   };
   runApp(new MyApp());
 }
